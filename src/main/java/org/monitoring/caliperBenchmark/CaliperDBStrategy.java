@@ -8,17 +8,20 @@ import com.google.caliper.Runner;
 import com.google.caliper.SimpleBenchmark;
 import java.util.Locale;
 import org.monitoring.db.Database;
-import org.monitoring.db.DerbyDatabase;
 import org.monitoring.db.MongoDatabase;
+import org.monitoring.db.MySQLDatabase;
+import org.monitoring.db.PostgreSQLDatabase;
 
 /**
  *
  * @author Michal
+ * results online
+ *   http://microbenchmarks.appspot.com/run/michal.dubravcik@gmail.com/org.monitoring.caliperBenchmark.CaliperDBStrategy
  */
 public class CaliperDBStrategy extends SimpleBenchmark {
 
     Database mongo = new MongoDatabase();
-    Database derby = new DerbyDatabase();
+    Database postgre = new PostgreSQLDatabase();
     Documents documents = new Documents();
 
     @Override
@@ -28,7 +31,7 @@ public class CaliperDBStrategy extends SimpleBenchmark {
     @Override
     public void tearDown(){
         mongo.tearDown();
-        derby.tearDown();
+        postgre.tearDown();
     }
 
     public void timeMongoStrategy(int reps) {
@@ -37,9 +40,9 @@ public class CaliperDBStrategy extends SimpleBenchmark {
         }
     }
 
-    public void timeDerbyStrategy(int reps) {
+    public void timePostgreSQLStrategy(int reps) {
         for (int i = 0; i < reps; i++) {            
-            derby.saveDocument(documents.getDocument(i));
+            postgre.saveDocument(documents.getDocument(i));
         }
     }
 

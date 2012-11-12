@@ -44,7 +44,7 @@ public class CaliperDB extends SimpleBenchmark {
     DB db;
     DBCollection coll;
     DBCollection coll2;
-    // objects to be saved to db
+    // documents to be saved to db
     List<DBObject> documents = new LinkedList<DBObject>();
     List<PreparedStatement> statements = new LinkedList<PreparedStatement>();
     DBObject document = null;

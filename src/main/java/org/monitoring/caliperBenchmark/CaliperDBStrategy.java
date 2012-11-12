@@ -8,6 +8,7 @@ import com.google.caliper.Runner;
 import com.google.caliper.SimpleBenchmark;
 import java.util.Locale;
 import org.monitoring.db.Database;
+import org.monitoring.db.DerbyDatabase;
 import org.monitoring.db.MongoDatabase;
 import org.monitoring.db.MySQLDatabase;
 import org.monitoring.db.PostgreSQLDatabase;
@@ -22,6 +23,8 @@ public class CaliperDBStrategy extends SimpleBenchmark {
 
     Database mongo = new MongoDatabase();
     Database postgre = new PostgreSQLDatabase();
+    Database mysql = new MySQLDatabase();
+    Database derby = new DerbyDatabase();
     Documents documents = new Documents();
 
     @Override
@@ -43,6 +46,16 @@ public class CaliperDBStrategy extends SimpleBenchmark {
     public void timePostgreSQLStrategy(int reps) {
         for (int i = 0; i < reps; i++) {            
             postgre.saveDocument(documents.getDocument(i));
+        }
+    }
+    public void timeDerbySQLStrategy(int reps) {
+        for (int i = 0; i < reps; i++) {            
+            derby.saveDocument(documents.getDocument(i));
+        }
+    }
+    public void timeMySQLStrategy(int reps) {
+        for (int i = 0; i < reps; i++) {            
+            mysql.saveDocument(documents.getDocument(i));
         }
     }
 

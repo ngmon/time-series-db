@@ -9,9 +9,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.monitoring.caliperBenchmark.CaliperDB;
+import org.monitoring.caliperBenchmark.SimpleDB;
 
 /**
  *
@@ -47,7 +48,7 @@ public class DerbyDatabase implements Database {
             st.setString(7, (String) object.get("processId"));
             st.setInt(8, Integer.valueOf(object.get("severity").toString()));
             st.setInt(9, Integer.valueOf(object.get("priority").toString()));
-            st.setString(10, "JSON can't have . (dot) in key string"); //(String) event.get("http://collectd.org/5.1/events.jsch").toString());
+            st.setString(10,  object.get("http://collectd_org/5_1/events_jsch").toString());
 
             int out = st.executeUpdate();
             
@@ -62,7 +63,11 @@ public class DerbyDatabase implements Database {
             drop = conn.prepareStatement("DELETE FROM test1");
             drop.executeUpdate();
         } catch (SQLException ex) {
-            Logger.getLogger(CaliperDB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SimpleDB.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+
+    public void saveDocuments(List<DBObject> documents) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

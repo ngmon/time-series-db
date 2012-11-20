@@ -14,7 +14,8 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.json.simple.JSONObject;
+import org.monitoring.db.Database;
+import org.monitoring.db.MongoDatabase;
 
 /**
  *
@@ -28,40 +29,41 @@ public class Documents {
         setUpDocuments();
     }
 
-    public static void setUpDocuments() {
+    public void setUpDocuments() {
         BufferedReader br = null;
         List<DBObject> file = new LinkedList<DBObject>();
         documents.clear();
         try {
-            br = new BufferedReader(new FileReader("src/main/resources/events.txt"));
+            br = new BufferedReader(new FileReader("C:/Users/Michal/Documents/NetBeansProjects/Monitoring/src/main/resources/events.txt"));
             String line;
             while ((line = br.readLine()) != null) {
                 DBObject object = ((DBObject) JSON.parse(line));
                 object = (DBObject) object.get("Event");
                 for (String s : object.keySet()) {
                     if (s.contains(".")) {
-                        object.put(s.replace(".", "_"),object.get(s));
+                        object.put(s.replace(".", "_"), object.get(s));
                         object.removeField(s);
                     }
-                }                
+                }
                 file.add(object);
             }
         } catch (IOException ex) {
-            Logger.getLogger(CaliperDB.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(SimpleDB.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             try {
                 br.close();
             } catch (IOException ex) {
-                Logger.getLogger(CaliperDB.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(SimpleDB.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-        for (int i = 0; i < 10; i++) {
-            List<DBObject> pom = new LinkedList<DBObject>();
-            pom.addAll(file);
-            Collections.copy(pom, file);
-            documents.addAll(pom);
-        }
-        
+//        for (int i = 0; i < 10; i++) {
+//            List<DBObject> pom = new LinkedList<DBObject>();
+//            pom.addAll(file);
+//            Collections.copy(pom, file);
+//            documents.addAll(pom);
+//        }
+        documents.addAll(file);
+
     }
 
     public DBObject getDocument(int i) {
@@ -71,16 +73,13 @@ public class Documents {
     public List<DBObject> getDocuments(int from, int to) {
         return documents.subList(from, to);
     }
-    
-    public int count(){
+
+    public int count() {
         int size = 0;
-        for(DBObject t : documents){
+        for (DBObject t : documents) {
             size++;
         }
         return size;
     }
-    
-    public static void main(String[] args){
-        setUpDocuments();
-    }
+
 }

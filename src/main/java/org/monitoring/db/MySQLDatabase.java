@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -47,7 +48,7 @@ public class MySQLDatabase implements Database {
             st.setString(7, (String) object.get("processId"));
             st.setInt(8, Integer.valueOf(object.get("severity").toString()));
             st.setInt(9, Integer.valueOf(object.get("priority").toString()));
-            st.setString(10, "JSON can't have . (dot) in key string"); //(String) event.get("http://collectd.org/5.1/events.jsch").toString());
+            st.setString(10,  object.get("http://collectd_org/5_1/events_jsch").toString());
 
             int out = st.executeUpdate();
             
@@ -64,5 +65,9 @@ public class MySQLDatabase implements Database {
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
+    }
+
+    public void saveDocuments(List<DBObject> documents) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

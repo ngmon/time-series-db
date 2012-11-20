@@ -9,8 +9,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.List;
 
 /**
  *
@@ -24,11 +23,14 @@ public class PostgreSQLDatabase implements Database {
 
     public PostgreSQLDatabase() {
         try {
+            Class.forName("org.postgresql.Driver");
             conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/test", "postgres", "root");
             query = "INSERT INTO test1 (occurrenceTime,detectionTime,hostname,type,"
                     + "application,process,processId,severity,priority,value)VALUES(?,?,?,?,?,?,?,?,?,?)";
 
         } catch (SQLException ex) {
+            ex.printStackTrace();
+        } catch (ClassNotFoundException ex){
             ex.printStackTrace();
         }
 
@@ -46,7 +48,7 @@ public class PostgreSQLDatabase implements Database {
             st.setString(7, (String) object.get("processId"));
             st.setInt(8, Integer.valueOf(object.get("severity").toString()));
             st.setInt(9, Integer.valueOf(object.get("priority").toString()));
-            st.setString(10, "JSON can't have . (dot) in key string"); //(String) event.get("http://collectd.org/5.1/events.jsch").toString());
+            st.setString(10,  object.get("http://collectd_org/5_1/events_jsch").toString());
 
             int out = st.executeUpdate();
             
@@ -63,5 +65,9 @@ public class PostgreSQLDatabase implements Database {
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
+    }
+
+    public void saveDocuments(List<DBObject> documents) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 }

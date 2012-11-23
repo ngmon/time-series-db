@@ -6,19 +6,11 @@ package org.monitoring.caliperBenchmark;
 
 import com.google.caliper.Runner;
 import com.google.caliper.SimpleBenchmark;
-import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
-import com.mongodb.DBObject;
 import com.mongodb.Mongo;
 import com.mongodb.WriteConcern;
-import com.mongodb.util.JSON;
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
-import java.sql.SQLException;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 
 /**

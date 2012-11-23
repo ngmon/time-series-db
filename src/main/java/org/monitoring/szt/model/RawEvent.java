@@ -1,6 +1,7 @@
-package org.monitoring.szt;
+package org.monitoring.szt.model;
 
 
+import org.monitoring.szt.model.MeasurementType;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;

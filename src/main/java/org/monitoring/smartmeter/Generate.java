@@ -4,6 +4,7 @@
  */
 package org.monitoring.smartmeter;
 
+import org.monitoring.smartmeter.model.MeterEvent;
 import java.sql.Timestamp;
 import java.util.Date;
 import java.util.Random;
@@ -24,7 +25,7 @@ public class Generate {
     
     public static void main(String[] args) {
         Date start = new Date();
-        Date stop = new Date();
+        Date stop;
         for (int i = 116186; i < 1000000; i++) {
             Date date = new Date();
 

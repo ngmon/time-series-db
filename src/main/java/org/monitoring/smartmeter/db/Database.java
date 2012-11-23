@@ -5,7 +5,7 @@
 package org.monitoring.smartmeter.db;
 
 import java.util.List;
-import org.monitoring.smartmeter.MeterEvent;
+import org.monitoring.smartmeter.model.MeterEvent;
 
 /**
  *

@@ -9,13 +9,8 @@ import com.mongodb.util.JSON;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.monitoring.db.Database;
-import org.monitoring.db.MongoDatabase;
 
 /**
  *
@@ -48,12 +43,12 @@ public class Documents {
                 file.add(object);
             }
         } catch (IOException ex) {
-            Logger.getLogger(SimpleDB.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
         } finally {
             try {
                 br.close();
             } catch (IOException ex) {
-                Logger.getLogger(SimpleDB.class.getName()).log(Level.SEVERE, null, ex);
+                ex.printStackTrace();
             }
         }
 //        for (int i = 0; i < 10; i++) {

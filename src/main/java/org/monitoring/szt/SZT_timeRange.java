@@ -2,11 +2,10 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.monitoring.caliperBenchmark;
+package org.monitoring.szt;
 
 import com.google.caliper.Runner;
 import com.google.caliper.SimpleBenchmark;
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Locale;
 import org.monitoring.szt.db.Database;
@@ -25,8 +24,8 @@ public class SZT_timeRange extends SimpleBenchmark {
 
     @Override
     protected void setUp() {
-        from = Timestamp.valueOf("2012-11-06 19:20:00.0");
-        to = Timestamp.valueOf("2012-11-08 10:20:00.0");
+        from = Timestamp.valueOf("2012-11-23 02:00:00");
+        to = Timestamp.valueOf("2012-11-23 02:01:00");
     }
 
     @Override
@@ -35,13 +34,13 @@ public class SZT_timeRange extends SimpleBenchmark {
 
     public void timeMongo_getEventsInTimeRange(int reps) {
         for (int i = 0; i < reps; i++) {
-            mongo.getEventsInTimeRange(new Long(1), from, to);
+            System.out.println( mongo.getEventsInTimeRange(new Long(1), from, to).size());
         }
     }
 
     public void timePostgre_getEventsInTimeRange(int reps) {
         for (int i = 0; i < reps; i++) {
-            postgre.getEventsInTimeRange(new Long(1), from, to);
+            System.out.println(postgre.getEventsInTimeRange(new Long(1), from, to).size());
         }
     }
 

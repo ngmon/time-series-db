@@ -8,9 +8,7 @@ import com.google.caliper.Runner;
 import com.google.caliper.SimpleBenchmark;
 import java.util.Locale;
 import org.monitoring.db.Database;
-import org.monitoring.db.DerbyDatabase;
 import org.monitoring.db.MongoDatabase;
-import org.monitoring.db.MySQLDatabase;
 import org.monitoring.db.PostgreSQLDatabase;
 
 /**

@@ -11,7 +11,7 @@ import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import java.net.UnknownHostException;
 import java.util.List;
-import org.monitoring.smartmeter.MeterEvent;
+import org.monitoring.smartmeter.model.MeterEvent;
 
 /**
  *
@@ -42,6 +42,7 @@ public class MongoDatabase implements Database {
     }
 
     public void save(List<MeterEvent> list) {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     public void save(MeterEvent event) {

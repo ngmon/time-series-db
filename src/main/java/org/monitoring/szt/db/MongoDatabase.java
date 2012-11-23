@@ -12,10 +12,10 @@ import com.mongodb.Mongo;
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import java.net.UnknownHostException;
-import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.LinkedList;
 import java.util.List;
-import org.monitoring.szt.RawEvent;
+import org.monitoring.szt.model.RawEvent;
 
 /**
  *
@@ -32,7 +32,7 @@ public class MongoDatabase implements Database {
         try {
             m = new Mongo("192.168.219.129", 27017);
             db = m.getDB(database);
-            db.setWriteConcern(WriteConcern.SAFE);
+            //db.setWriteConcern(WriteConcern.SAFE);
             coll = db.getCollection(collection);
         } catch (UnknownHostException ex) {
             ex.printStackTrace();
@@ -80,5 +80,20 @@ public class MongoDatabase implements Database {
         for(RawEvent event : list){
             coll.insert(mapper.mapObjectToDBObject(event));
             }
+    }
+    
+    //not efficient as save(list) from unknown reason
+    public void saveBatch(List<RawEvent> list, int count){
+        int i = 0;
+        List<DBObject> batch = new LinkedList<DBObject>();
+        for(RawEvent event : list){
+            i++;            
+            batch.add(mapper.mapObjectToDBObject(event));
+            if(i%count == 0){
+                coll.insert(batch);
+                batch.clear();
+            }
+            coll.insert(batch);
+        }
     }
 }

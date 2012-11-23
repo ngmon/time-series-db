@@ -10,9 +10,6 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.monitoring.caliperBenchmark.SimpleDB;
 
 /**
  *
@@ -63,7 +60,7 @@ public class DerbyDatabase implements Database {
             drop = conn.prepareStatement("DELETE FROM test1");
             drop.executeUpdate();
         } catch (SQLException ex) {
-            Logger.getLogger(SimpleDB.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
         }
     }
 

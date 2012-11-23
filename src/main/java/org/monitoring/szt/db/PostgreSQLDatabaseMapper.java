@@ -16,23 +16,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import org.monitoring.szt.MeasurementType;
-import org.monitoring.szt.RawEvent;
-import org.monitoring.szt.SourceType;
+import org.monitoring.szt.model.MeasurementType;
+import org.monitoring.szt.model.RawEvent;
+import org.monitoring.szt.model.SourceType;
 
 /**
  *
  * @author Michal
  */
 public class PostgreSQLDatabaseMapper {
-    
-    Connection conn;
-    
-    public PostgreSQLDatabaseMapper(Connection conn) {
-        this.conn = conn;
         
-    }
-    
     public List<RawEvent> getResult(ResultSet rs) {
         List<RawEvent> result = new LinkedList<RawEvent>();
         try {
@@ -47,20 +40,7 @@ public class PostgreSQLDatabaseMapper {
                 event.setSourceType(SourceType.valueOf(rs.getString("sourceType")));
                 event.setVersion(rs.getInt("version"));                
                 List<String> list = Arrays.asList(rs.getString("list").split(","));
-                //List<String> list = Lists.newArrayList(Splitter.on(",").split(rs.getString("list")));
-                event.setValues(list);
-
-                //get values from second table
-//                String value_query =
-//                        "SELECT * "
-//                        + "FROM RawEvent_Values  "
-//                        + "WHERE rawevent_id = ?";
-//                PreparedStatement value_st = conn.prepareStatement(value_query);
-//                value_st.setLong(1, event.getId());
-//                ResultSet value_rs = value_st.executeQuery();
-//                while (value_rs.next()) {
-//                    event.addValue(value_rs.getString("valuelist"));
-//                }
+                event.setValues(list);                
                 result.add(event);
             }
         } catch (SQLException ex) {

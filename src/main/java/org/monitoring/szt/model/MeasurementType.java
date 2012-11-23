@@ -1,4 +1,4 @@
-package org.monitoring.szt;
+package org.monitoring.szt.model;
 
 
 import java.util.Arrays;

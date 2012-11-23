@@ -6,7 +6,7 @@ package org.monitoring.szt.db;
 
 import java.sql.Timestamp;
 import java.util.List;
-import org.monitoring.szt.RawEvent;
+import org.monitoring.szt.model.RawEvent;
 
 /**
  *

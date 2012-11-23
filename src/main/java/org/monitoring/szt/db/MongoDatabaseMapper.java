@@ -11,9 +11,9 @@ import java.util.Date;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
-import org.monitoring.szt.MeasurementType;
-import org.monitoring.szt.RawEvent;
-import org.monitoring.szt.SourceType;
+import org.monitoring.szt.model.MeasurementType;
+import org.monitoring.szt.model.RawEvent;
+import org.monitoring.szt.model.SourceType;
 
 /**
  *

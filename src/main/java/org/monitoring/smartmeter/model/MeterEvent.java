@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.monitoring.smartmeter;
+package org.monitoring.smartmeter.model;
 
 import java.util.Date;
 

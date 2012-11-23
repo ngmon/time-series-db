@@ -10,7 +10,7 @@ import com.mongodb.DBObject;
 import java.sql.Date;
 import java.util.LinkedList;
 import java.util.List;
-import org.monitoring.smartmeter.MeterEvent;
+import org.monitoring.smartmeter.model.MeterEvent;
 
 /**
  *

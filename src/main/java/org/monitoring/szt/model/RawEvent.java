@@ -1,22 +1,14 @@
 package org.monitoring.szt.model;
 
 
-import org.monitoring.szt.model.MeasurementType;
+import com.google.code.morphia.annotations.Entity;
+import com.google.code.morphia.annotations.Id;
+import com.google.code.morphia.annotations.Property;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Temporal;
-import javax.persistence.Transient;
-import javax.persistence.Version;
 
 
 /**
@@ -24,12 +16,12 @@ import javax.persistence.Version;
  *
  * @author Ondrej Kotek <ondrej.kotek@mycroftmind.com>
  */
-
+@Entity("rawevent")
 public class RawEvent implements Serializable {
 
     
     @Id
-    @GeneratedValue
+    //@GeneratedValue
     private Long id;
 
     public Long getId() {
@@ -106,7 +98,7 @@ public class RawEvent implements Serializable {
         this.eventTimestamp = eventTimestamp;
     }
 
-    @Version
+    //@Version
     private int version;
 
     /**
@@ -118,7 +110,7 @@ public class RawEvent implements Serializable {
     /**
      * Type of the event source this event comes from.
      */
-    @Enumerated(EnumType.STRING)
+    //@Enumerated(EnumType.STRING)
     
     private SourceType sourceType;
 
@@ -128,7 +120,7 @@ public class RawEvent implements Serializable {
     
     private String source;
 
-    @Enumerated(EnumType.STRING)
+    //@Enumerated(EnumType.STRING)
     
     private MeasurementType measurementType;
     
@@ -249,7 +241,9 @@ public class RawEvent implements Serializable {
         StringBuilder sb = new StringBuilder();
         sb.append("RawEvent");
         sb.append("\n  [");
-        sb.append("concId = ");
+        sb.append("id = ");
+        sb.append(this.id);
+        sb.append(", concId = ");
         sb.append(this.getValueAsString(0));
         sb.append(", measurementType = ");
         sb.append(this.measurementType);

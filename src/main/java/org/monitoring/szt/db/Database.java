@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.monitoring.szt.db;
 
 import java.sql.Timestamp;
@@ -25,5 +21,9 @@ public interface Database {
     public List<RawEvent> getRRDFromSimulationAndSource(String source, Long simulationId);
     
     public void save(List<RawEvent> list);
+    
+    public void save(RawEvent event);
+    
+    public void deleteByVersion(int num);
     
 }

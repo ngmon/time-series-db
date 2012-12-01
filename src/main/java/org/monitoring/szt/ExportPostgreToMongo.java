@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.monitoring.szt;
 
 import java.sql.Timestamp;
@@ -19,18 +15,19 @@ import org.monitoring.szt.model.RawEvent;
 public class ExportPostgreToMongo {
 
     static Database postgre = new PostgreSQLDatabase();
-    static Database mongo = new MongoDatabase("postgres", "rawevent");
+    static Database mongo = new MongoDatabase( "rawevent");
 
     public static void main(String[] args) {
         Timestamp from, to;
         Date start_read, stop_read, start_write, stop_write;
-        from = Timestamp.valueOf("2012-11-22 09:58:09.955");
+        from = Timestamp.valueOf("2012-11-22 09:58:00.553");
         int count=0;
-        while(count < 2444692){                        
+        List<RawEvent> list = null;
+        while(count < 2444692 && (count == 0 || ! list.isEmpty())){                        
             to = new Timestamp(from.getTime()+(60*10*1000));
             
             start_write = new Date();                                    
-            List<RawEvent> list = postgre.getEventsInTimeRange(new Long(1), from, to);
+            list = postgre.getEventsInTimeRange(new Long(1), from, to);
             stop_write = new Date();
                         
             start_read = new Date();

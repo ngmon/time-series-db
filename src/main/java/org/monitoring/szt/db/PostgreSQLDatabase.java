@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.monitoring.szt.db;
 
 import java.sql.Connection;
@@ -12,6 +8,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.monitoring.szt.model.RawEvent;
 
 /**
@@ -20,6 +18,8 @@ import org.monitoring.szt.model.RawEvent;
  */
 public class PostgreSQLDatabase implements Database {
 
+    private String raweventTable = "rawevent";
+    private String raweventTableValues = "rawevent_values";
     Connection conn = null;
     List<RawEvent> events = new LinkedList<RawEvent>();
     PostgreSQLDatabaseMapper mapper;
@@ -36,14 +36,20 @@ public class PostgreSQLDatabase implements Database {
         }
     }
 
+    public PostgreSQLDatabase(String rawEventTable, String rawEventTableValues) {
+        this();
+        this.raweventTable = rawEventTable;
+        this.raweventTableValues = rawEventTableValues;
+    }
+
     public List<RawEvent> getAllEventsDefaultOrder() {
         try {
             String query = "SELECT id, sourcetype, simulationid, simulationtimestamp, source,"
                     + "measurementtype, occurrencetimestamp, version, array_to_string(array_agg(valuelist ORDER BY values_order), ',') as list "
-                    + "FROM rawevent JOIN rawevent_values "
-                    + "ON rawevent.id = rawevent_values.rawevent_id "
+                    + "FROM " + raweventTable + " JOIN " + raweventTableValues
+                    + " ON " + raweventTable + ".id = " + raweventTableValues + ".rawevent_id "
                     + "GROUP BY id, sourcetype, source, measurementtype, occurrencetimestamp ";
-            
+
             PreparedStatement st = conn.prepareStatement(query);
             ResultSet result = st.executeQuery();
             return mapper.getResult(result);
@@ -58,8 +64,8 @@ public class PostgreSQLDatabase implements Database {
 
             String query = "SELECT id, sourcetype, simulationid, simulationtimestamp, source,"
                     + "measurementtype, occurrencetimestamp, version, array_to_string(array_agg(valuelist ORDER BY values_order), ',') as list "
-                    + "FROM rawevent JOIN rawevent_values "
-                    + "ON rawevent.id = rawevent_values.rawevent_id "
+                    + "FROM " + raweventTable + " JOIN " + raweventTableValues
+                    + " ON " + raweventTable + ".id = " + raweventTableValues + ".rawevent_id "
                     + "GROUP BY id, sourcetype, source, measurementtype, occurrencetimestamp "
                     + "ORDER BY event.occurrenceTimestamp";
             PreparedStatement st = conn.prepareStatement(query);
@@ -75,8 +81,8 @@ public class PostgreSQLDatabase implements Database {
         try {
             String query = "SELECT id, sourcetype, simulationid, simulationtimestamp, source,"
                     + "measurementtype, occurrencetimestamp, version, array_to_string(array_agg(valuelist ORDER BY values_order), ',') as list "
-                    + "FROM rawevent JOIN rawevent_values "
-                    + "ON rawevent.id = rawevent_values.rawevent_id "
+                    + "FROM " + raweventTable + " JOIN " + raweventTableValues
+                    + " ON " + raweventTable + ".id = " + raweventTableValues + ".rawevent_id "
                     + "WHERE simulationid = ? "
                     + "AND occurrencetimestamp >= ? "
                     + "AND occurrencetimestamp <= ? "
@@ -99,8 +105,8 @@ public class PostgreSQLDatabase implements Database {
         try {
             String query = "SELECT id, sourcetype, simulationid, simulationtimestamp, source,"
                     + "measurementtype, occurrencetimestamp, version, array_to_string(array_agg(valuelist ORDER BY values_order), ',') as list "
-                    + "FROM rawevent JOIN rawevent_values "
-                    + "ON rawevent.id = rawevent_values.rawevent_id "
+                    + "FROM " + raweventTable + " JOIN " + raweventTableValues
+                    + " ON " + raweventTable + ".id = " + raweventTableValues + ".rawevent_id "
                     + "WHERE event.simulationId = ? "
                     + "GROUP BY id, sourcetype, source, measurementtype, occurrencetimestamp "
                     + "ORDER BY event.occurrenceTimestamp";
@@ -119,8 +125,8 @@ public class PostgreSQLDatabase implements Database {
             String query =
                     "SELECT id, sourcetype, simulationid, simulationtimestamp, source,"
                     + "measurementtype, occurrencetimestamp, version, array_to_string(array_agg(valuelist ORDER BY values_order), ',') as list "
-                    + "FROM rawevent JOIN rawevent_values "
-                    + "ON rawevent.id = rawevent_values.rawevent_id "
+                    + "FROM " + raweventTable + " JOIN " + raweventTableValues
+                    + " ON " + raweventTable + ".id = " + raweventTableValues + ".rawevent_id "
                     + "WHERE event.simulationId = ? AND event.source = ? "
                     //                    + "AND (event.sourceType = 'RRD_CPU' "
                     //                    + "OR event.sourceType = 'RRD_MEMORY' "
@@ -138,7 +144,54 @@ public class PostgreSQLDatabase implements Database {
         return null;
     }
 
+    public void deleteByVersion(int num) {
+        PreparedStatement drop;
+        try {
+            drop = conn.prepareStatement("DELETE FROM " + raweventTable + " WHERE version = ?");
+            drop.setInt(1, num);
+            drop.executeUpdate();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void insert(RawEvent event) {
+        try {
+            String query = "INSERT INTO " + raweventTable + "(id, measurementtype, occurrencetimestamp, simulationid,"
+                    + " simulationtimestamp, source, sourcetype, version) VALUES(?,?,?,?,?,?,?,?)";
+            PreparedStatement st;
+            st = conn.prepareStatement(query);
+            mapper.set(st, event);
+            for (int index = 0; index < event.getValues().size(); index++) {
+                query = "INSERT INTO " + raweventTableValues + "(rawevent_id, valuelist, values_order) VALUES(?,?,?)";
+                st = conn.prepareStatement(query);
+                mapper.setValue(st, event, index);
+            }
+            st.executeUpdate();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public void save(RawEvent event) {
+        try {
+            conn.setAutoCommit(false);
+            insert(event);
+            conn.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
+
     public void save(List<RawEvent> list) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        try {
+            conn.setAutoCommit(false);
+            for (RawEvent event : list) {
+                insert(event);
+            }
+            conn.commit();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
 }

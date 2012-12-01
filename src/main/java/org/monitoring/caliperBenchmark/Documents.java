@@ -1,7 +1,3 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package org.monitoring.caliperBenchmark;
 
 import com.mongodb.DBObject;
@@ -9,8 +5,12 @@ import com.mongodb.util.JSON;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
+import org.monitoring.szt.db.Database;
+import org.monitoring.szt.db.MongoDatabase;
+import org.monitoring.szt.model.RawEvent;
 
 /**
  *
@@ -18,13 +18,13 @@ import java.util.List;
  */
 public class Documents {
 
-    private static List<DBObject> documents = new LinkedList<DBObject>();
+    public static List<RawEvent> documents = new LinkedList<RawEvent>();
 
     public Documents() {
-        setUpDocuments();
+        setUpDocumentsFromMongo();
     }
 
-    public void setUpDocuments() {
+    public void setUpDocumentsFromFile() {
         BufferedReader br = null;
         List<DBObject> file = new LinkedList<DBObject>();
         documents.clear();
@@ -51,30 +51,36 @@ public class Documents {
                 ex.printStackTrace();
             }
         }
-//        for (int i = 0; i < 10; i++) {
-//            List<DBObject> pom = new LinkedList<DBObject>();
-//            pom.addAll(file);
-//            Collections.copy(pom, file);
-//            documents.addAll(pom);
-//        }
-        documents.addAll(file);
+        //documents.addAll(file);
+        throw new UnsupportedOperationException("Not supported yet.");
 
     }
+    
+    public void setUpDocumentsFromMongo() {
+        Database mongo = new MongoDatabase( "rawevent");
+        Timestamp from = Timestamp.valueOf("2012-11-22 09:58:29");
+        long interval = 1000 * 60 * 100; //100 minutes => 127 000 events
+        documents = mongo.getEventsInTimeRange(new Long(1), from, new Timestamp(from.getTime() + interval));
+        for(RawEvent event : documents){
+            event.setVersion(33);
+            event.setId(event.getId()+3000000);
+        }
+    }
 
-    public DBObject getDocument(int i) {
+    public RawEvent getDocument(int i) {
         return documents.get(i);
     }
 
-    public List<DBObject> getDocuments(int from, int to) {
+    public List<RawEvent> getDocuments(int from, int to) {
         return documents.subList(from, to);
     }
 
     public int count() {
-        int size = 0;
-        for (DBObject t : documents) {
-            size++;
-        }
-        return size;
+//        int size = 0;
+//        for (RawEvent t : documents) {
+//            size++;
+//        }
+        return documents.size();
     }
 
 }

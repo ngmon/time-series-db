@@ -1,5 +1,7 @@
 package org.monitoring.szt;
 
+import com.google.caliper.Param;
+import com.google.caliper.Runner;
 import com.google.caliper.SimpleBenchmark;
 import java.util.Locale;
 import org.monitoring.caliperBenchmark.Documents;
@@ -13,6 +15,12 @@ import org.monitoring.szt.db.PostgreSQLDatabase;
  */
 public class SZT_save extends SimpleBenchmark {
 
+    @Param(
+            {
+                //"1", 
+                "50"
+            })
+    int count;
     
     static Database mongo = new MongoDatabase("rawevent");
     Database postgre = new PostgreSQLDatabase();
@@ -31,13 +39,13 @@ public class SZT_save extends SimpleBenchmark {
 
     public void timeMongo_save(int reps) {
         for (int i = 0; i < reps; i++) {
-            mongo.save(documents.getDocuments(0,4));
+            mongo.save(documents.getDocuments(i*count,i*count+count-1));
         }
     }
 
 //    public void timePostgreSQL_save(int reps) {
 //        for (int i = 0; i < reps; i++) {
-//            postgre.save(documents.getDocuments(0,1));
+//            postgre.save(documents.getDocuments(i*count,i*count+count-1));
 //        }
 //    }
     
@@ -45,9 +53,7 @@ public class SZT_save extends SimpleBenchmark {
 
     public static void main(String[] args) throws Exception {
         Locale.setDefault(Locale.US);
-        String[] x = {"--debug"};
-        //Runner.main(SZT_save.class, args);
-        mongo.deleteByVersion(33);
-        mongo.save(documents.getDocuments(0,4));
+        mongo.deleteByVersion(33); 
+        Runner.main(SZT_save.class, args);        
     }
 }

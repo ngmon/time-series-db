@@ -78,12 +78,12 @@ public class MongoDatabase implements Database {
     }
 
     public void save(List<RawEvent> list) {
-        for (RawEvent event : list) {
-            save(event);
-        }
-        //saveBatch(list, 100);
+//        for (RawEvent event : list) {
+//            save(event);
+//        }
+        saveBatch(list, 100);
     }
-
+    
     //not efficient as save(list) from unknown reason
     public void saveBatch(List<RawEvent> list, int count) {
         int i = 0;
@@ -96,7 +96,9 @@ public class MongoDatabase implements Database {
                 batch.clear();
             }            
         }
-        coll.insert(batch);
+        if(!batch.isEmpty()){
+            coll.insert(batch);
+        }
     }
 
     public void deleteByVersion(int num) {
@@ -105,6 +107,6 @@ public class MongoDatabase implements Database {
     }
 
     public void save(RawEvent event) {
-        coll.save(mapper.mapObjectToDBObject(event));
+        coll.insert(mapper.mapObjectToDBObject(event));
     }
 }

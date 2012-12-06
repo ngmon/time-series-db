@@ -85,7 +85,7 @@ public class PostgreSQLDatabase implements Database {
                     + " ON " + raweventTable + ".id = " + raweventTableValues + ".rawevent_id "
                     + "WHERE simulationid = ? "
                     + "AND occurrencetimestamp >= ? "
-                    + "AND occurrencetimestamp <= ? "
+                    + "AND occurrencetimestamp < ? "
                     + "GROUP BY id, sourcetype, source, measurementtype, occurrencetimestamp "
                     + "ORDER BY occurrencetimestamp ASC";
 

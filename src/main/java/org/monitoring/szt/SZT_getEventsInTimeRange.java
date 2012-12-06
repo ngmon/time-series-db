@@ -15,7 +15,7 @@ import org.monitoring.szt.db.PostgreSQLDatabase;
  */
 public class SZT_getEventsInTimeRange extends SimpleBenchmark {
     
-    @Param({"1", "30", "60", "180"}) int seconds;
+    @Param({"1"/*, "60", "180"*/}) int seconds;
     
     Database mongo = new MongoDatabase("rawevent");
     Database postgre = new PostgreSQLDatabase();

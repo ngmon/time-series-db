@@ -20,7 +20,7 @@ public class SZT_Mongo_save extends SimpleBenchmark {
     @Param(
             {
                 //"1", 
-                "10"
+                "100"
             })
     int count;
     

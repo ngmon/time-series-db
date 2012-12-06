@@ -17,7 +17,7 @@ public class SZT_getEventsInTimeRange_small extends SimpleBenchmark {
     
     @Param({"1"}) int seconds;
     
-    Database mongo = new MongoDatabase("rawevent");
+    Database mongo = new MongoDatabase("rawevent_small");
     Database postgre = new PostgreSQLDatabase("rawevent_small","rawevent_small_values");
     Timestamp from, to;
 

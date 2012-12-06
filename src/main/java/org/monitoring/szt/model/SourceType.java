@@ -12,10 +12,13 @@ public enum SourceType {
     ELIN_DISPATCH_LOG,
     ELIN_IO_LOG,
     SIMULATOR_LOG,
+    HES_LOG,
+    MDMS,
     SERVICE_MONITOR,
     INFRASTRUCTURE_STATISTICS,
     RRD_CPU,
     RRD_MEMORY,
-    RRD_NETWORK;
+    RRD_NETWORK,
+    ORACLE;
 
 }

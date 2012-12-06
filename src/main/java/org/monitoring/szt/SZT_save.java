@@ -18,7 +18,9 @@ public class SZT_save extends SimpleBenchmark {
     @Param(
             {
                 //"1", 
-                "50"
+                //"50",
+                //"100",
+                "500"
             })
     int count;
     
@@ -34,7 +36,7 @@ public class SZT_save extends SimpleBenchmark {
     @Override
     protected void tearDown() {
         mongo.deleteByVersion(33);        
-        //postgre.deleteByVersion(33);
+        postgre.deleteByVersion(33);
     }
 
     public void timeMongo_save(int reps) {
@@ -43,17 +45,16 @@ public class SZT_save extends SimpleBenchmark {
         }
     }
 
-//    public void timePostgreSQL_save(int reps) {
-//        for (int i = 0; i < reps; i++) {
-//            postgre.save(documents.getDocuments(i*count,i*count+count-1));
-//        }
-//    }
+    public void timePostgreSQL_save(int reps) {
+        for (int i = 0; i < reps; i++) {
+            postgre.save(documents.getDocuments(i*count,i*count+count-1));
+        }
+    }
     
     
 
     public static void main(String[] args) throws Exception {
         Locale.setDefault(Locale.US);
-        mongo.deleteByVersion(33); 
         Runner.main(SZT_save.class, args);        
     }
 }

@@ -14,20 +14,22 @@ import org.monitoring.szt.model.RawEvent;
  */
 public class R_ExportPostgreToMongo {
 
-    static Database postgre = new PostgreSQLDatabase();
-    static Database mongo = new MongoDatabase( "rawevent");
+    static Database postgre = 
+            new PostgreSQLDatabase("public2.rawevent","public2.rawevent_values");
+    static Database mongo = new MongoDatabase( "rawevent_week");
 
     public static void main(String[] args) {
         Timestamp from, to;
         Date start_read, stop_read, start_write, stop_write;
-        from = Timestamp.valueOf("2012-11-22 09:58:00.553");
+        from = Timestamp.valueOf("2012-12-01 00:00:00.000");
         int count=0;
+        int total = 478200;
         List<RawEvent> list = null;
-        while(count < 2444692 && (count == 0 || ! list.isEmpty())){                        
+        while(count < total && (count == 0 || ! list.isEmpty())){                        
             to = new Timestamp(from.getTime()+(60*10*1000));
             
             start_write = new Date();                                    
-            list = postgre.getEventsInTimeRange(new Long(1), from, to);
+            list = postgre.getEventsInTimeRange(new Long(56301), from, to);
             stop_write = new Date();
                         
             start_read = new Date();
@@ -36,7 +38,7 @@ public class R_ExportPostgreToMongo {
             
             count += list.size();
             
-            System.out.println("Processed in batch: " + list.size() + ", Percent " + (100*count/2444672)
+            System.out.println("Processed in batch: " + list.size() + ", Percent " + (100*count/total)
                     + " , read time elapsed " + (stop_read.getTime()-start_read.getTime()) + "ms"
                     + ", write time elapsed " + (stop_write.getTime()-start_write.getTime()) + "ms");
             

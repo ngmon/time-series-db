@@ -2,6 +2,7 @@ package org.monitoring.szt.db;
 
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
+import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -10,6 +11,7 @@ import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import java.net.UnknownHostException;
 import java.sql.Timestamp;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import org.monitoring.szt.model.RawEvent;
@@ -22,23 +24,24 @@ public class MongoDatabase implements Database {
 
     Mongo m;
     DB db;
-    DBCollection coll;
+    DBCollection coll, statistics;
     MongoDatabaseMapper mapper = new MongoDatabaseMapperManual();
 
-    public MongoDatabase( String collection) {
+    public MongoDatabase(String collection) {
         try {
             m = new Mongo("192.168.219.129", 27017);
             db = m.getDB("postgres");
             db.setWriteConcern(WriteConcern.SAFE);
             coll = db.getCollection(collection);
+            statistics = db.getCollection("statistics");
         } catch (UnknownHostException ex) {
             ex.printStackTrace();
         } catch (MongoException ex) {
             ex.printStackTrace();
         }
     }
-    
-    public void setMapper(MongoDatabaseMapper mapper){
+
+    public void setMapper(MongoDatabaseMapper mapper) {
         this.mapper = mapper;
     }
 
@@ -55,7 +58,7 @@ public class MongoDatabase implements Database {
         query.put("simulationId", simulationId);
         BasicDBObject time = new BasicDBObject();
         time.put("$gte", from);
-        time.put("$lte", to);
+        time.put("$lt", to);
         query.put("occurrenceTimestamp", time);
         return mapper.mapDBObjectsToObjects(coll.find(query).sort(new BasicDBObject("occurrenceTimestamp", 1)));
     }
@@ -81,22 +84,22 @@ public class MongoDatabase implements Database {
 //        for (RawEvent event : list) {
 //            save(event);
 //        }
-        saveBatch(list, 100);
+        saveBatch(list, 500);
     }
+
     
-    //not efficient as save(list) from unknown reason
     public void saveBatch(List<RawEvent> list, int count) {
         int i = 0;
         List<DBObject> batch = new LinkedList<DBObject>();
         for (RawEvent event : list) {
             i++;
             batch.add(mapper.mapObjectToDBObject(event));
-            if (i>0 && i % count == 0) {
-                coll.insert(batch);                
+            if (i > 0 && i % count == 0) {
+                coll.insert(batch);
                 batch.clear();
-            }            
+            }
         }
-        if(!batch.isEmpty()){
+        if (!batch.isEmpty()) {
             coll.insert(batch);
         }
     }
@@ -108,5 +111,21 @@ public class MongoDatabase implements Database {
 
     public void save(RawEvent event) {
         coll.insert(mapper.mapObjectToDBObject(event));
+        saveStatistics(event);
+    }
+
+    private void saveStatistics(RawEvent event) {
+        long trim = event.getOccurrenceTimestamp().getTime() % 86400000;
+        DBObject query = BasicDBObjectBuilder.start()
+                .append("date", new Date(event.getOccurrenceTimestamp().getTime() - trim))
+                .append("source", event.getSource())
+                .get();
+        DBObject inc = BasicDBObjectBuilder.start()
+                .append("daily", 1)
+                .append("hourly." + ((Integer) event.getOccurrenceTimestamp().getHours()).toString(), 1)
+                .append("minutely." + event.getOccurrenceTimestamp().getHours() + "." + ((Integer) event.getOccurrenceTimestamp().getMinutes()).toString(), 1)
+                .get();
+        BasicDBObject update = new BasicDBObject("$inc", inc);
+        statistics.update(query, update, true, false);
     }
 }

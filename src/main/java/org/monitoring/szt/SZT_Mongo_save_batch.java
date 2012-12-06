@@ -18,11 +18,12 @@ public class SZT_Mongo_save_batch extends SimpleBenchmark {
     @Param(
             {
                 //"1",
-                "1000"
+                "3000"
             })
     int count;
     
-    @Param({"10","100","250","500","750","1000"}) int batch;
+    //@Param({"10","100","250","500","750","1000"}) int batch;
+    @Param({"1500","2000"}) int batch;
     
     static MongoDatabase mongo_manual = new MongoDatabase("rawevent");
     Documents documents = new Documents();
@@ -54,7 +55,6 @@ public class SZT_Mongo_save_batch extends SimpleBenchmark {
 
     public static void main(String[] args) throws Exception {
         Locale.setDefault(Locale.US);
-        mongo_manual.deleteByVersion(33); 
         Runner.main(SZT_Mongo_save_batch.class, args);
     }
 }

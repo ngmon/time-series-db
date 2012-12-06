@@ -10,7 +10,6 @@ import lombok.Getter;
 /**
  * @author Martin Svehla <martin.svehla@mycroftmind.com>
  */
-
 public enum MeasurementType {
 
     TEST_MEASUREMENT(0, new Class<?>[]{}),
@@ -38,6 +37,15 @@ public enum MeasurementType {
     // concentratorId
     SIMULATOR_SENDING_FAILED(1, new Class<?>[]{String.class}),
 
+    // messageType, averagePerSecond, totalMeasurements
+    HES_MEASUREMENTS(3, new Class<?>[]{String.class, Double.class, Long.class}),
+
+    ///// MDMS application data
+    // readType, messageId, readPerMessage
+    MDMS_PRE_CONSUME_MESSAGE(3, new Class<?>[]{String.class, String.class, Double.class}),
+    // readType, readCount
+    MDMS_PRE_CONSUME_READ(2, new Class<?>[]{String.class, Long.class}),
+
     RAW_ELIN_LOG(1, new Class<?>[]{String.class}),
 
     ///// RRD data
@@ -54,6 +62,14 @@ public enum MeasurementType {
     NETWORK_0_DOWNLOAD_THRESHOLD(1, new Class<?>[]{Double.class}),
     NETWORK_0_ERRORS_THRESHOLD(1, new Class<?>[]{Double.class}),
 
+    ///// Oracle data
+    // cpuLoad
+    ORACLE_CPU_LOAD(1, new Class<?>[]{Double.class}),
+    // dataRead, dataWrite
+    ORACLE_IO_LOAD(2, new Class<?>[]{Double.class, Double.class}),
+    // topSql, secondSql, thirdSql
+    ORACLE_SQL_LOAD(3, new Class<?>[]{String.class, String.class, String.class}),
+
     ///// Monitors
     HOST_UNREACHABLE(1, new Class<?>[]{String.class}),
     URL_UNREACHABLE(1, new Class<?>[]{String.class});
@@ -66,6 +82,5 @@ public enum MeasurementType {
         this.numberOfFields = numberOfFields;
         this.valueTypes = Collections.unmodifiableList(Arrays.asList(types));
     }
-    
-  
+
 }

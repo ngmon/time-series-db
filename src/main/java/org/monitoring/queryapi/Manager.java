@@ -23,10 +23,10 @@ public class Manager {
      * @param host ip address or host name of server
      * @param port number representing port on server
      */
-    public Manager(String host, int port){
+    public Manager(String host, int port, String dba){
         try {
-            m = new Mongo(host, port);
-            db = m.getDB("postgres");
+            m = new Mongo(host, port); 
+            db = m.getDB(dba);
         } catch (UnknownHostException ex) {
             Logger.getLogger(Manager.class.getName()).log(Level.SEVERE, "Could not connect Mongo DB", ex);
         }
@@ -34,11 +34,11 @@ public class Manager {
     }
     
     /**
-     * Manager connected on ip:port localhost:27017
+     * Manager connected on ip:port localhost:27017 and Database test
      * @see Manager#Manager(java.lang.String, int) 
      */
     public Manager(){
-        this("localhost",27017);
+        this("localhost",27017, "test");
     }
     
     public Query createQueryOnCollection(String col){

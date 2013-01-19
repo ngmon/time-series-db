@@ -72,6 +72,11 @@ public class Field {
         return query;
     }
     
+    public Query hasThisOne(Object value){
+        return equal(value);
+    }
+    
+    
     public Query hasThisElement(Object value){
         query.append(field, new BasicDBObject("$elemMatch", value));
         return query;

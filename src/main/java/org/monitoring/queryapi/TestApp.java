@@ -4,6 +4,7 @@ import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -18,22 +19,18 @@ public class TestApp {
     
         Manager m = new Manager("192.168.219.129",27017, "postgres");
         
-        List<String> it = new LinkedList<String>();
-        it.add("blaa");
-        it.add("bleeeee");
+        Query q = m.createQueryOnCollection("test")
+                .count(2000);
         
-        DBObject ob = m.createQueryOnCollection("rawevent")
-                .orderDesc("source")
-                .field("sourceType").equal("INFRASTRUCTURE_STATISTICS")
-                .field("source").exists()
-                .orderDesc("v")
-                .limit(5)
-                .get();
+        System.out.println(q.get());
+        
+        
+        Iterable<DBObject> ob = q.execute();
         
         //while(ob.explain())
-        
-        System.out.println(ob.toString());
-        
+        for(DBObject o : ob){
+            System.out.println(new Date(Math.round((Double) o.get("_id"))) + "    "+ o.get("count").toString());
+        }
     }
 
 }

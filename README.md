@@ -28,6 +28,7 @@ _______
 Internal storage
 <pre>
 {
+  _id:id              //generated
   t:time,             //stored as long!
   s:source,
   d:  {               //event data

@@ -1,13 +1,12 @@
 package org.monitoring.queryapi;
 
 import com.mongodb.DBObject;
-import java.util.Date;
 
 /**
  *
  * @author Michal Dubravcik
  */
-public class TestApp {
+public class Main {
     
     
     public static void main(String[] args) {

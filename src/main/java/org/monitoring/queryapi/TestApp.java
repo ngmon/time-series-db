@@ -1,12 +1,7 @@
 package org.monitoring.queryapi;
 
-import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
 
 /**
  *
@@ -18,9 +13,9 @@ public class TestApp {
     public static void main(String[] args) {
     
         Manager m = new Manager("192.168.219.129",27017, "postgres");
-        
+        Long gf = new Long("1358625189915");
         Query q = m.createQueryOnCollection("test")
-                .count(2000);
+                .sum(2000,"v").rename();
         
         System.out.println(q.get());
         
@@ -29,7 +24,8 @@ public class TestApp {
         
         //while(ob.explain())
         for(DBObject o : ob){
-            System.out.println(new Date(Math.round((Double) o.get("_id"))) + "    "+ o.get("count").toString());
+            System.out.println(o);
+            //System.out.println(new Date(Math.round((Double) o.get("time"))) + "    "+ o.get("value").toString());
         }
     }
 

@@ -75,7 +75,11 @@ public class Query {
         return this;
     }
     
-    public Query count(int groupStep){
+    public Query count(){
+        builder.push("$group").append("_id","count").push("value").append("$sum", 1);
+        return this;
+    }
+    private void groupTime(int groupStep){
         BasicDBList mod = new BasicDBList();
         mod.add("$t");
         mod.add(groupStep);
@@ -86,25 +90,62 @@ public class Query {
         subtract.add("$t");
         subtract.add("$mod");
         
-        builder.push("$group").push("_id").append("$subtract", subtract).pop().push("count").append("$sum", 1);
+        builder.push("$group").push("_id").append("$subtract", subtract).pop();        
+    }
+    public Query count(int groupStep){
+        groupTime(groupStep);
+        
+        builder.push("value").append("$sum", 1);
         return this;
         
     }
     
+    public Query rename(){
+        addPipeOperation("$project", new BasicDBObjectBuilder().start().append("time", "$_id").append("value",1).append("_id", 0).get());
+        return this;
+    }
+    
+    private void reduce(String reducer,String field, int groupStep){
+        groupTime(groupStep);
+        builder.push("value").append("$"+reducer, "$d."+field);        
+    }
+    
+    public Query sum(int groupStep, String field){      
+        reduce("sum", field, groupStep);
+        return this;
+    }
+    
+    public Query avg(int groupStep, String field){    
+        reduce("avg", field, groupStep);
+        return this;
+    }
+    
+    public Query min(int groupStep, String field){    
+        reduce("min", field, groupStep);
+        return this;
+    }
+    
+    public Query max(int groupStep, String field){    
+        reduce("max", field, groupStep);
+        return this;
+    }
+    
     public Query fromDate(Date date){
+        long dateNum = date.getTime();
         if(!dateLimit.isEmpty()){
-            dateLimit.append("$gte", date);
+            dateLimit.append("$gte", dateNum);
         }else{
-            dateLimit.push("occurrenceTimestamp").append("$gte", date);
+            dateLimit.push("$match").push("t").append("$gte", dateNum);
         }
         return this;
     }
     
     public Query toDate(Date date){
+        long dateNum = date.getTime();
         if(!dateLimit.isEmpty()){
-            dateLimit.append("$lte", date);
+            dateLimit.append("$lte", dateNum);
         }else{
-            dateLimit.push("occurrenceTimestamp").append("$lte", date);
+            dateLimit.push("$match").push("t").append("$lte", dateNum);
         }
         return this;
     }

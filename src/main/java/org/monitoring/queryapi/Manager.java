@@ -5,6 +5,7 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.Mongo;
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,6 +29,8 @@ public class Manager {
             m = new Mongo(host, port); 
             db = m.getDB(dba);
         } catch (UnknownHostException ex) {
+            Logger.getLogger(Manager.class.getName()).log(Level.SEVERE, "Unknown host Mongo DB", ex);
+        } catch (IOException ex){
             Logger.getLogger(Manager.class.getName()).log(Level.SEVERE, "Could not connect Mongo DB", ex);
         }
         

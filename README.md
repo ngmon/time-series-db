@@ -2,7 +2,7 @@ time-series-db
 ==============
 
 Mongo Query API for aggregation results. <br>
-Invoking of query execution one can obtain __events__ or __metrics__ counted from events.
+Invoking of query execution one can obtain __events__ or __metrics__ computed from events.
 
 Query __events__ :
 * field - setting filter operators

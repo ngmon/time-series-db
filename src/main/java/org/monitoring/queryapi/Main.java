@@ -1,6 +1,7 @@
 package org.monitoring.queryapi;
 
 import com.mongodb.DBObject;
+import java.util.Date;
 
 /**
  *
@@ -13,15 +14,14 @@ public class Main {
     
         Manager m = new Manager("192.168.219.129",27017, "postgres");
         Long gf = new Long("1358625189915");
-        Query q = m.createQueryOnCollection("test");
+        
+        QueryMapReduce q = (QueryMapReduce) m.createQueryOnCollection("test2");
                 
         
-        Iterable<DBObject> ob = q.execute();
+        Iterable<DBObject> ob = q.count(4);        
         
-        //while(ob.explain())
-        for(DBObject o : ob){
+        for(Object o : ob){
             System.out.println(o);
-            //System.out.println(new Date(Math.round((Double) o.get("time"))) + "    "+ o.get("value").toString());
         }
     }
 

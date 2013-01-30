@@ -1,7 +1,7 @@
 package org.monitoring.queryapi;
 
-import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
+import java.util.Date;
 
 /**
  *
@@ -10,7 +10,19 @@ import com.mongodb.DBObject;
 public interface Query {
     
     
-    public void append(String field, Object value);
+    void append(String field, Object value);
 
-    public Iterable<DBObject> execute();    
+    Iterable<DBObject> execute();
+
+    Field field(String field);
+
+    Query fromDate(Date date);
+
+    Query limit(int num);
+
+    Query orderAsc(String val);
+
+    Query orderDesc(String val);
+
+    Query toDate(Date date);    
 }

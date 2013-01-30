@@ -14,23 +14,24 @@ Query __events__ :
        * hasThisOne, hasAllOf, hasAnyOf, hasNoneOf, hasThisElement	 
 * orderAsc/orderDesc
 * limit
-* skip
 * fromDate/toDate
 
-Query __metrics__ counted from events (with variable time step defined):
-* count
-* sum
-* max
-* min
-* avg
+Query __metrics__ counted from events (*with variable time step defined):
+* count total
+* count*
+* sum*
+* max*
+* min*
+* avg*
+* distinct
 
 _______
 Internal storage
 <pre>
 {
   _id:id              //generated
-  t:time,             //stored as long!
-  s:source,
+  t:time,             //stored as ISO Date
+  s:source,           //type,source of data
   d:  {               //event data
       value1:{...},
       value2:{...}

@@ -13,11 +13,8 @@ public class Main {
     
         Manager m = new Manager("192.168.219.129",27017, "postgres");
         Long gf = new Long("1358625189915");
-        Query q = m.createQueryOnCollection("test")
-                .sum(2000,"v").rename();
-        
-        System.out.println(q.get());
-        
+        Query q = m.createQueryOnCollection("test");
+                
         
         Iterable<DBObject> ob = q.execute();
         

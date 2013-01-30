@@ -45,7 +45,7 @@ public class Manager {
     }
     
     public Query createQueryOnCollection(String col){
-        return new Query(db.getCollection(col));
+        return new QueryMapReduce(db.getCollection(col));
     }
     
     public DB getDb(){

@@ -13,12 +13,12 @@ public class Main {
     public static void main(String[] args) {
     
         Manager m = new Manager("192.168.219.129",27017, "postgres");
-        Long gf = new Long("1358625189915");
+        Long gf = new Date().getTime();
+        QueryMapReduce q = (QueryMapReduce) m.createQueryOnCollection("test2");//.fromDate(new Date(gf-1000*60*90));
+         
+        System.out.println(q.count());
         
-        QueryMapReduce q = (QueryMapReduce) m.createQueryOnCollection("test2");
-                
-        
-        Iterable<DBObject> ob = q.count(4);        
+        Iterable<DBObject> ob = q.count(5);        
         
         for(Object o : ob){
             System.out.println(o);

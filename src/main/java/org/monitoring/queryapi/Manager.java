@@ -45,13 +45,18 @@ public class Manager {
     }
     
     public Query createQueryOnCollection(String col){
-        return new QueryMapReduce(db.getCollection(col));
+        setCollection(col);
+        return new QueryMapReduce(this.col);
     }
     
     public DB getDb(){
         return db;
     }
     
+    public void setCollection(String col){
+        this.col = db.getCollection(col);
+    }
+        
     public DBCollection getCollection(){
         return col;
     }

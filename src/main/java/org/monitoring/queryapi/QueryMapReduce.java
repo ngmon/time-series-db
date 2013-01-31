@@ -54,21 +54,14 @@ public class QueryMapReduce implements Query{
         limit = num;
         return this;        
     }
-        
-    public QueryMapReduce project(String name, boolean bool){
-        
-        return this;
-    }
-    
+            
     public QueryMapReduce fromDate(Date date){
-        long dateNum = date.getTime();
-        query.push("t").append("$gte", dateNum);        
+        query.push("t").append("$gte", date);        
         return this;
     }
     
     public QueryMapReduce toDate(Date date){
-        long dateNum = date.getTime();
-        query.push("t").append("$lte", dateNum);         
+        query.push("t").append("$lte", date);         
         return this;
     }    
     
@@ -212,6 +205,8 @@ public class QueryMapReduce implements Query{
         }
         
         MapReduceOutput out = col.mapReduce(mapReduceCmd);
+        
+        System.out.println(out.getCommand());
         
         return out.results();
     }

@@ -15,14 +15,20 @@ public class Main {
         Manager m = new Manager("192.168.219.129",27017, "postgres");
         Long gf = new Date().getTime();
         QueryMapReduce q = (QueryMapReduce) m.createQueryOnCollection("test2");//.fromDate(new Date(gf-1000*60*90));
-         
-        System.out.println(q.count());
+                
+//        Iterable<DBObject> ob =  q.max(1000,"v");        
+//        for(Object o : ob){
+//            System.out.println(o);
+//        }
         
-        Iterable<DBObject> ob = q.count(5);        
+        DBObject ob = q.reasonFor("s", "Q");
+        System.out.println(ob);
         
-        for(Object o : ob){
-            System.out.println(o);
-        }
+//        DBObject ob2 = q.distinct("v");
+//        System.out.println(ob2);
+        
+        
+        
     }
 
 }

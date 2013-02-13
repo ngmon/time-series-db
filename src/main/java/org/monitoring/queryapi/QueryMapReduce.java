@@ -1,10 +1,13 @@
 package org.monitoring.queryapi;
 
+import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MapReduceCommand;
 import com.mongodb.MapReduceOutput;
+import java.util.ArrayList;
 import java.util.Date;
 
 /**
@@ -70,20 +73,46 @@ public class QueryMapReduce implements Query{
         return this;
     }
     
-    public Iterable<DBObject> distinct(String field){
-        return col.distinct("d."+field, query.get());
+    public DBObject reasonFor(String field, Object value){
+        BasicDBObjectBuilder builder = new BasicDBObjectBuilder();
+        BasicDBList dates = new BasicDBList();
+        Iterable<DBObject> reasons;
+        int num = 0;
+        
+        Iterable<DBObject> results = col.find(new BasicDBObject(field, value));
+        
+        for(DBObject result : results){            
+            dates.add(
+                    BasicDBObjectBuilder.start().push("t").append("$lte", (Date)result.get("t"))
+                    .append("$gte", new Date(((Date)result.get("t")).getTime()-1000)).get()
+            ); 
+            num++;
+        } 
+        if(num > 0){
+            DBObject match = builder.append("$match", new BasicDBObject("$or", dates)).get();
+            DBObject group = BasicDBObjectBuilder.start().push("$group").append("_id", "$s")
+                        .push("count").append("$sum", 1).get();
+            DBObject sort = BasicDBObjectBuilder.start().push("$sort").append("count", -1).get();
+            reasons = col.aggregate(match,group,sort).results();
+        }else{
+            reasons = new ArrayList<DBObject>();
+        }
+        return wrap("founded effects", num, "reasons",reasons);
+    }
+    
+    public DBObject distinct(String field){
+        return wrap("result",col.distinct("d."+field, query.get()));
     }
     
     public int count(){
         return col.find(query.get()).count();
     }
     
-    public Iterable<DBObject> count(int groupTime){
+    public DBObject count(int groupTime){
         String map = 
                 "function() {"
                 + "time = this.t;"
-                + "time.setSeconds(time.getSeconds()-time.getSeconds()%"+groupTime+");"
-                + "time.setMilliseconds(0);"
+                + "time.setTime(time.getTime()-time.getTime()%"+groupTime+");"
                 + "emit(time, 1);"
                 + "};";
         
@@ -92,23 +121,22 @@ public class QueryMapReduce implements Query{
                 + "return values.length;"
                 + "};";
         
-        return aggregate(map, reduce);
+        return wrap("result",aggregate(map, reduce));
     }
         
-    public Iterable<DBObject> avg(int groupTime, String field){
+    public DBObject avg(int groupTime, String field){
         return avgsum(groupTime, field, "avg");
     }    
     
-    public Iterable<DBObject> sum(int groupTime, String field){
+    public DBObject sum(int groupTime, String field){
         return avgsum(groupTime, field, "sum");
     }
     
-    private Iterable<DBObject> avgsum(int groupTime, String field, String type){
+    private DBObject avgsum(int groupTime, String field, String type){
         String map = 
                 "function() {"
                 + "time = this.t;"
-                + "time.setSeconds(time.getSeconds()-time.getSeconds()%"+groupTime+");"
-                + "time.setMilliseconds(0);"
+                + "time.setTime(time.getTime()-time.getTime()%"+groupTime+");"
                 + "emit(time, this.d."+field+");"
                 + "};";
         
@@ -117,23 +145,22 @@ public class QueryMapReduce implements Query{
                 + "return Array.avg(values);"
                 + "};";  
         
-        return aggregate(map, reduce);
+        return wrap("result",aggregate(map, reduce));
     }
     
-    public Iterable<DBObject> min(int groupTime, String field){
+    public DBObject min(int groupTime, String field){
         return minmax(groupTime, field, "min");
     }
     
-    public Iterable<DBObject> max(int groupTime, String field){
+    public DBObject max(int groupTime, String field){
         return minmax(groupTime, field, "max");
     }
             
-    private Iterable<DBObject> minmax(int groupTime, String field, String type){
+    private DBObject minmax(int groupTime, String field, String type){
         String map = 
                 "function() {"
                 + "time = this.t;"
-                + "time.setSeconds(time.getSeconds()-time.getSeconds()%"+groupTime+");"
-                + "time.setMilliseconds(0);"
+                + "time.setTime(time.getTime()-time.getTime()%"+groupTime+");"
                 + "emit(time, this.d."+field+");"
                 + "};";
         
@@ -142,15 +169,14 @@ public class QueryMapReduce implements Query{
                 + "return Math."+type+".apply(Math, values);"
                 + "};";  
         
-        return aggregate(map, reduce);
+        return wrap("result",aggregate(map, reduce));
     }
     
-    public Iterable<DBObject> median(int groupTime, String field){
+    public DBObject median(int groupTime, String field){
         String map = 
                 "function() {"
                 + "time = this.t;"
-                + "time.setSeconds(time.getSeconds()-time.getSeconds()%"+groupTime+");"
-                + "time.setMilliseconds(0);"
+                + "time.setTime(time.getTime()-time.getTime()%"+groupTime+");"
                 + "emit(time, this.d."+field+");"
                 + "};";
         
@@ -159,7 +185,7 @@ public class QueryMapReduce implements Query{
                 + "return (values.length%2!=0)?values[(1+values.length)/2-1]:(values[values.length/2-1]+values[values.length/2])/2"
                 + "};";  
         
-        return aggregate(map, reduce);
+        return wrap("result",aggregate(map, reduce));
     }
     
     @Deprecated
@@ -168,8 +194,7 @@ public class QueryMapReduce implements Query{
         String map = 
                 "function() {"
                 + "time = this.t;"
-                + "time.setSeconds(time.getSeconds()-time.getSeconds()%1);"
-                + "time.setMilliseconds(0);"
+                + "time.setTime(time.getTime()-time.getTime()%"+groupTime+");"
                 + "emit(time, this.d.v);"
                 + "};";
         
@@ -217,6 +242,13 @@ public class QueryMapReduce implements Query{
     
     private Iterable<DBObject> aggregate(String map, String reduce){
         return aggregate(map, reduce, "", "", MapReduceCommand.OutputType.INLINE);
+    }
+    
+    private DBObject wrap(String firstKey, Object firstValue, String secondKey, Object secondValue){
+        return BasicDBObjectBuilder.start().append(firstKey, firstValue).append(secondKey, secondValue).get();
+    }
+    private DBObject wrap(String firstKey, Object firstValue){
+        return new BasicDBObject(firstKey, firstValue);
     }
 
 }

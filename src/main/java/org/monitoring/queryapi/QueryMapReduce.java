@@ -73,13 +73,25 @@ public class QueryMapReduce implements Query{
         return this;
     }
     
-    public DBObject reasonFor(String field, Object value){
-        BasicDBObjectBuilder builder = new BasicDBObjectBuilder();
+    public DBObject reasonFor(String effectKey, Object effectValue, int limit, String... groupBy){
+        return reasonFor(new BasicDBObject(effectKey, effectValue), limit, groupBy);
+    }
+    
+    public DBObject reasonFor(String effectKey, Object effectValue, String... groupBy){
+        return reasonFor(new BasicDBObject(effectKey, effectValue), 100, groupBy);
+    }
+    
+    public DBObject reasonFor(DBObject effect, String... groupBy){
+        return reasonFor(effect, 100, groupBy);
+    }
+    
+    public DBObject reasonFor(DBObject effect, int limit, String... groupBy){
         BasicDBList dates = new BasicDBList();
+        BasicDBObjectBuilder builder = new BasicDBObjectBuilder();
         Iterable<DBObject> reasons;
         int num = 0;
         
-        Iterable<DBObject> results = col.find(new BasicDBObject(field, value));
+        Iterable<DBObject> results = col.find(effect);
         
         for(DBObject result : results){            
             dates.add(
@@ -89,11 +101,21 @@ public class QueryMapReduce implements Query{
             num++;
         } 
         if(num > 0){
-            DBObject match = builder.append("$match", new BasicDBObject("$or", dates)).get();
-            DBObject group = BasicDBObjectBuilder.start().push("$group").append("_id", "$s")
-                        .push("count").append("$sum", 1).get();
-            DBObject sort = BasicDBObjectBuilder.start().push("$sort").append("count", -1).get();
-            reasons = col.aggregate(match,group,sort).results();
+            DBObject match = BasicDBObjectBuilder.start()
+                    .append("$match", new BasicDBObject("$or", dates)).get();
+            
+            for(String groupKey : groupBy){
+                builder.append(groupKey, "$"+groupKey);
+            }
+            DBObject groupInner = builder.get();
+            DBObject group = BasicDBObjectBuilder.start().push("$group").append("_id",groupInner)
+                    .push("count").append("$sum", 1).get();
+            DBObject order = BasicDBObjectBuilder.start().push("$sort").append("count", -1).get();
+            DBObject project = BasicDBObjectBuilder.start().push("$project")
+                    .append("_id", 0).append("count", 1).append("group", "$_id").get();
+            DBObject limiter = new BasicDBObject("$limit", limit);  
+            
+            reasons = col.aggregate(match, group, order, limiter, project).results();
         }else{
             reasons = new ArrayList<DBObject>();
         }
@@ -231,7 +253,7 @@ public class QueryMapReduce implements Query{
         
         MapReduceOutput out = col.mapReduce(mapReduceCmd);
         
-        System.out.println(out.getCommand());
+        //System.out.println(out.getCommand());
         
         return out.results();
     }

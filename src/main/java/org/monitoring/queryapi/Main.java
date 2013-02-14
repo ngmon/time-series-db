@@ -16,12 +16,10 @@ public class Main {
         Long gf = new Date().getTime();
         QueryMapReduce q = (QueryMapReduce) m.createQueryOnCollection("test2");//.fromDate(new Date(gf-1000*60*90));
                 
-//        Iterable<DBObject> ob =  q.max(1000,"v");        
-//        for(Object o : ob){
-//            System.out.println(o);
-//        }
+//        DBObject ob =  q.max(1000,"v");        
+//        System.out.println(ob);
         
-        DBObject ob = q.reasonFor("s", "Q");
+        DBObject ob = q.reasonFor("s", "C", "s");
         System.out.println(ob);
         
 //        DBObject ob2 = q.distinct("v");

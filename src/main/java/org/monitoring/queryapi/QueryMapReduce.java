@@ -9,6 +9,7 @@ import com.mongodb.MapReduceCommand;
 import com.mongodb.MapReduceOutput;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 /**
  * MapReduce query
@@ -73,6 +74,30 @@ public class QueryMapReduce implements Query{
         return this;
     }
     
+    public DBObject difference(DBObject match, String keyForDifference){
+        String keyInner = keyForDifference.substring(keyForDifference.lastIndexOf(".")+1);
+        
+        DBObject project = BasicDBObjectBuilder.start().push("$project")
+                .append("_id", 0).append("t", 1).append(keyInner, "$"+keyForDifference).get();
+        Iterable<DBObject> list = col.aggregate(new BasicDBObject("$match", match), project).results();       
+        
+        int i = 0;
+        Number numPre = new Double("0");
+        
+        BasicDBList result = new BasicDBList();
+        for(DBObject object : list){
+            Number num = (Number) object.get(keyInner);
+            if(i>0){
+                result.add(BasicDBObjectBuilder.start()
+                        .append("t", object.get("t"))
+                        .append(keyInner,num.doubleValue() - numPre.doubleValue()).get());
+            }
+            numPre = num;
+            i++;
+        }
+        return wrap("result", result);
+    }
+    
     public DBObject reasonFor(String effectKey, Object effectValue, int limit, String... groupBy){
         return reasonFor(new BasicDBObject(effectKey, effectValue), limit, groupBy);
     }
@@ -119,7 +144,7 @@ public class QueryMapReduce implements Query{
         }else{
             reasons = new ArrayList<DBObject>();
         }
-        return wrap("founded effects", num, "reasons",reasons);
+        return wrap("founded effects", num, "result",reasons);
     }
     
     public DBObject distinct(String field){

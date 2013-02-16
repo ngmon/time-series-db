@@ -15,16 +15,21 @@ public class Main {
     
         Manager m = new Manager("192.168.219.129",27017, "postgres");
         Long gf = new Date().getTime();
-        QueryMapReduce q = (QueryMapReduce) m.createQueryOnCollection("test2");//.fromDate(new Date(gf-1000*60*90));
-
-        DBObject ob =  q.difference(new BasicDBObject(),"d.v");  
-        System.out.println(ob);
+        QueryMapReduce q = (QueryMapReduce) m.createQueryOnCollection("test2");
+        
+        
+//        DBObject ob =  q.difference(new BasicDBObject(),"d.v");  
+//        System.out.println(ob);
         
 //        DBObject ob = q.reasonFor("s", "C", "s");
 //        System.out.println(ob);
         
-//        DBObject ob2 = q.distinct("v");
-//        System.out.println(ob2);
+        DBObject ob2 = q.cacheAvg("v");
+        //System.out.println(ob2);
+        for(Object ob : (Iterable)ob2.get("result")){
+            System.out.println(ob);
+        }
+        
         
         
         

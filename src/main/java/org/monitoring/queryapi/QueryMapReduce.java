@@ -4,12 +4,13 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MapReduceCommand;
 import com.mongodb.MapReduceOutput;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
+import java.util.Iterator;
 
 /**
  * MapReduce query
@@ -24,8 +25,9 @@ public class QueryMapReduce implements Query{
     
     BasicDBObjectBuilder query = new BasicDBObjectBuilder();
     BasicDBObjectBuilder sort = new BasicDBObjectBuilder(); 
-    int limit = 0;  
-    private int groupTime;
+    int limit = 0; 
+    Date start = null,end = null;
+    private int groupTime = 1000;
         
     public QueryMapReduce(DBCollection col){
         this.col = col;
@@ -58,14 +60,24 @@ public class QueryMapReduce implements Query{
         limit = num;
         return this;        
     }
+    
+    private BasicDBObjectBuilder getMatchQuery(){
+        if(start != null){
+            query.push("t").append("$gte", start);
+        }
+        if(end != null){
+            query.push("t").append("$lte", end);
+        }        
+        return query;
+    }
             
     public QueryMapReduce fromDate(Date date){
-        query.push("t").append("$gte", date);        
+        start = date;
         return this;
     }
     
     public QueryMapReduce toDate(Date date){
-        query.push("t").append("$lte", date);         
+        end = date;
         return this;
     }    
     
@@ -148,11 +160,11 @@ public class QueryMapReduce implements Query{
     }
     
     public DBObject distinct(String field){
-        return wrap("result",col.distinct("d."+field, query.get()));
+        return wrap("result",col.distinct("d."+field, getMatchQuery().get()));
     }
     
     public int count(){
-        return col.find(query.get()).count();
+        return col.find(getMatchQuery().get()).count();
     }
     
     public DBObject count(int groupTime){
@@ -189,10 +201,75 @@ public class QueryMapReduce implements Query{
         
         String reduce = 
                 "function(id, values) {"
-                + "return Array.avg(values);"
+                + "return Array."+type+"(values);"
                 + "};";  
         
         return wrap("result",aggregate(map, reduce));
+    }
+
+    public DBObject cacheAvg(String field) {
+        DBCursor cur = col.getDB().getCollection("cacheAvg")
+                .find(getMatchQuery().get()).sort(new BasicDBObject("_id", 1));
+        ArrayList<DBObject> list = new ArrayList<DBObject>();
+        long startTime = 1360778279000L;//start.getTime() - start.getTime() % groupTime;
+        long endTime = 1360778289000L;//end.getTime() - end.getTime() % groupTime;
+        long queryStartTime = 0;
+        long queryEndTime = 0;
+        boolean hold = false;
+        DBObject cacheObj = null;
+        Iterator<DBObject> it = cur.iterator();
+
+        String map =
+                "function() {"
+                + "time = this.t;"
+                + "time.setTime(time.getTime()-time.getTime()%" + groupTime + ");"
+                + "emit(time, this.d." + field + ");"
+                + "};";
+
+        String reduce =
+                "function(id, values) {"
+                + "return Array.avg(values);"
+                + "};";
+
+        String finalize = "";
+        
+        if (cur.count()>0) {
+            for (long actualTime = startTime; actualTime <= endTime; actualTime += groupTime) {
+                if (it.hasNext() || hold) {
+                    if (!hold) {
+                        cacheObj = it.next();
+                    }
+                    long cacheObjTime = ((Date) cacheObj.get("_id")).getTime();
+
+                    //aktualny = cachovany && hold - minuly sa nerovnal
+                    if (cacheObjTime == actualTime && hold) {
+                        hold = false;
+                        Iterable<DBObject> missing = aggregate(map, reduce, finalize, "cacheAvg", MapReduceCommand.OutputType.MERGE, new Date(queryStartTime), new Date(queryEndTime+groupTime));
+                        for (DBObject obj : missing) {
+                            list.add(obj);
+                            System.out.print("x"+obj);
+                        }
+                        list.add(cacheObj);
+                        System.out.println(queryStartTime + ">>" + queryEndTime);
+                        //aktualny =! cachovany && hold = false - prvykrat najdene
+                    } else if (cacheObjTime != actualTime && !hold) {
+                        queryStartTime = actualTime;
+                        queryEndTime = actualTime;
+                        hold = true;
+                        //aktualny =! cachovany && hold = false - viackrat najdene
+                    } else if (cacheObjTime != actualTime && hold) {
+                        queryEndTime = actualTime;
+                        System.out.print("x");
+                    } else {
+                        list.add(cacheObj);
+                        System.out.print("*");
+                    }
+                }
+            }
+            return wrap("result",list);
+        }else{
+            return wrap("result",aggregate(map, reduce, finalize, "cacheAvg", MapReduceCommand.OutputType.MERGE));
+        }
     }
     
     public DBObject min(int groupTime, String field){
@@ -262,23 +339,41 @@ public class QueryMapReduce implements Query{
     } 
     
     private Iterable<DBObject> aggregate(String map, String reduce,String finalize, String output,MapReduceCommand.OutputType type){
+        return aggregate(map, reduce, finalize, output, type, null, null);
         
-        MapReduceCommand mapReduceCmd = 
-                new MapReduceCommand(col, map, reduce, output, type, query.get());        
+    }
+    
+    private Iterable<DBObject> aggregate(String map, String reduce,String finalize, String output,MapReduceCommand.OutputType type, Date qStart, Date qEnd){
+        MapReduceCommand mapReduceCmd;
+        if(qEnd==null && qStart==null){
+            mapReduceCmd = 
+                new MapReduceCommand(col, map, reduce, output, type, getMatchQuery().get());    
+        }else{
+            DBObject time = BasicDBObjectBuilder.start().push("t").append("$gte", qStart).append("$lte", qEnd).get();
+            getMatchQuery().get().putAll(time);
+            System.out.println(time);
+            mapReduceCmd = 
+                new MapReduceCommand(col, map, reduce, output, type, time );
+        }
         
         if(!finalize.isEmpty()){
             mapReduceCmd.setFinalize(finalize);
         }        
         if(!sort.isEmpty()){
-            mapReduceCmd.setSort(sort.get());
+            mapReduceCmd.setSort(sort.get());            
+        }else{
+            mapReduceCmd.setSort(new BasicDBObject("_id",1));
         }
+        
+        
         if(limit!=0){
             mapReduceCmd.setLimit(limit);
         }
         
         MapReduceOutput out = col.mapReduce(mapReduceCmd);
         
-        //System.out.println(out.getCommand());
+        System.out.println(out.getCommandResult());
+        System.out.println(out.getCommand());
         
         return out.results();
     }

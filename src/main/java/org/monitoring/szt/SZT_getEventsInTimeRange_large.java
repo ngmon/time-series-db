@@ -13,18 +13,18 @@ import org.monitoring.szt.db.PostgreSQLDatabase;
  *
  * @author Michal
  */
-public class SZT_getEventsInTimeRange extends SimpleBenchmark {
+public class SZT_getEventsInTimeRange_large extends SimpleBenchmark {
     
     @Param({"1"/*, "60", "180"*/}) int seconds;
     
-    Database mongo = new MongoDatabase("rawevent");
+    Database mongo = new MongoDatabase("rawevent_large");
     Database postgre = new PostgreSQLDatabase();
     Timestamp from, to;
     long hour = 0; //2 *60*60*1000;
 
     @Override
     protected void setUp() {
-        from = Timestamp.valueOf("2012-11-22 09:58:29");
+        from = Timestamp.valueOf("2012-12-11 18:00:03");
         //to = Timestamp.valueOf("2012-11-23 02:00:30");
     }
 
@@ -34,18 +34,18 @@ public class SZT_getEventsInTimeRange extends SimpleBenchmark {
 
     public void timeMongo_getEventsInTimeRange(int reps) {
         for (int i = 0; i < reps; i++) {
-            System.out.println( mongo.getEventsInTimeRange(new Long(1), new Timestamp(from.getTime()+i*hour), new Timestamp(from.getTime() + seconds*1000 + i*hour)).size());
+            System.out.println( mongo.getEventsInTimeRange(new Long(870351), new Timestamp(from.getTime()+i*hour), new Timestamp(from.getTime() + seconds*1080 + i*hour)).size());
         }
     }
 
     public void timePostgre_getEventsInTimeRange(int reps) {
         for (int i = 0; i < reps; i++) {
-            System.out.println(postgre.getEventsInTimeRange(new Long(1), new Timestamp(from.getTime()+i*hour), new Timestamp(from.getTime() + seconds*1000 + i*hour)).size());
+            System.out.println(postgre.getEventsInTimeRange(new Long(870351), new Timestamp(from.getTime()+i*hour), new Timestamp(from.getTime() + seconds*1080 + i*hour)).size());
         }
     }
 
     public static void main(String[] args) throws Exception {
         Locale.setDefault(Locale.US);
-        Runner.main(SZT_getEventsInTimeRange.class, args);
+        Runner.main(SZT_getEventsInTimeRange_large.class, args);
     }
 }

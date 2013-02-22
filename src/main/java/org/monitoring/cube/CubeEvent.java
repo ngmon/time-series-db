@@ -21,18 +21,13 @@ import org.json.simple.JSONObject;
  * @author Michal
  */
 class CubeEvent {
-
     JSONObject json;
 
     public CubeEvent() {
         json = new JSONObject();
         json.put("type", "default");
     }
-
-    public void addType(String type) {
-        json.put("type", type);
-    }
-
+    
     public void addData(JSONObject data) {
         json.put("data", data);
     }
@@ -44,31 +39,8 @@ class CubeEvent {
         json.put("time", df.format(time));
     }
 
-    @Override
-    public String toString() {
-        return json.toString();
-    }
-    
-    public void sendViaUDP() {
-        try {
-            String host = "192.168.219.129";
-            int port = 1180;
-            byte[] message = json.toString().getBytes();
-
-            // Get the internet address of the specified host
-            InetAddress address = InetAddress.getByName(host);
-
-            // Initialize a datagram packet with data and address
-            DatagramPacket packet = new DatagramPacket(message, message.length,
-                    address, port);
-
-            // Create a datagram socket, send the packet through it, close it.
-            DatagramSocket dsocket = new DatagramSocket();
-            dsocket.send(packet);
-            dsocket.close();
-        } catch (IOException e) {
-            System.err.println(e);
-        }
+    public void addType(String type) {
+        json.put("type", type);
     }
 
     public void sendViaRest() {
@@ -78,26 +50,19 @@ class CubeEvent {
             conn.setDoOutput(true);
             conn.setRequestMethod("POST");
             conn.setRequestProperty("Content-Type", "application/json");
-
             OutputStream os = conn.getOutputStream();
-            
             JSONArray cubeArray = new JSONArray();
             cubeArray.add(json);
             os.write(cubeArray.toString().getBytes());
             os.flush();
-
-            BufferedReader br = new BufferedReader(new InputStreamReader(
-                    (conn.getInputStream())));
-
+            BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()));
             String output;
             System.out.println("Output from Server .... \n");
             while ((output = br.readLine()) != null) {
                 System.out.println(output);
             }
-
             if (conn.getResponseCode() != HttpURLConnection.HTTP_OK) {
-                throw new RuntimeException("Failed : HTTP error code : "
-                        + conn.getResponseCode() + conn.getResponseMessage());
+                throw new RuntimeException("Failed : HTTP error code : " + conn.getResponseCode() + conn.getResponseMessage());
             }
             os.close();
             conn.disconnect();
@@ -105,4 +70,28 @@ class CubeEvent {
             System.err.println(ex);
         }
     }
+
+    public void sendViaUDP() {
+        try {
+            String host = "192.168.219.129";
+            int port = 1180;
+            byte[] message = json.toString().getBytes();
+            // Get the internet address of the specified host
+            InetAddress address = InetAddress.getByName(host);
+            // Initialize a datagram packet with data and address
+            DatagramPacket packet = new DatagramPacket(message, message.length, address, port);
+            // Create a datagram socket, send the packet through it, close it.
+            DatagramSocket dsocket = new DatagramSocket();
+            dsocket.send(packet);
+            dsocket.close();
+        } catch (IOException e) {
+            System.err.println(e);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return json.toString();
+    }
+
 }

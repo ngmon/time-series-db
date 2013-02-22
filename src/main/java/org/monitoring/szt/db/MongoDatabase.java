@@ -31,7 +31,7 @@ public class MongoDatabase implements Database {
         try {
             m = new Mongo("192.168.219.129", 27017);
             db = m.getDB("postgres");
-            db.setWriteConcern(WriteConcern.SAFE);
+            //db.setWriteConcern(WriteConcern.SAFE);
             coll = db.getCollection(collection);
             statistics = db.getCollection("statistics");
         } catch (UnknownHostException ex) {

@@ -25,10 +25,13 @@ public class Main {
 //        DBObject ob = q.reasonFor("s", "C", "s");
 //        System.out.println(ob);
         
-        DBObject ob2 = q.cacheAvg("v");
-        for(Object ob : (Iterable)ob2.get("result")){
-            System.out.println(ob);
-        }
+//        DBObject ob2 = q.cacheAvg("v");
+//        for(Object ob : (Iterable)ob2.get("result")){
+//            System.out.println(ob);
+//        }
+        
+        DBObject ob3 = q.cache(1, 20);
+        System.out.println(ob3);
         
         
         

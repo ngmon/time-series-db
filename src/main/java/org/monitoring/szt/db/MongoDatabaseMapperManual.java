@@ -20,7 +20,7 @@ public class MongoDatabaseMapperManual implements MongoDatabaseMapper {
     @Override
     public DBObject mapObjectToDBObject(RawEvent event) {
         DBObject eventm = new BasicDBObject();
-        eventm.put("_id", event.getId());
+        eventm.put("_id", event.getId()); //_id in rawevent numeric 
         eventm.put("measurementType", event.getMeasurementType().toString());
         eventm.put("occurrenceTimestamp", event.getOccurrenceTimestamp());
         eventm.put("simulationId", event.getSimulationId());

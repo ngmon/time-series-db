@@ -19,6 +19,7 @@ public enum SourceType {
     RRD_CPU,
     RRD_MEMORY,
     RRD_NETWORK,
+    RRD_DISK,
     ORACLE;
 
 }

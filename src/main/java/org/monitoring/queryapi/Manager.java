@@ -60,5 +60,9 @@ public class Manager {
     public DBCollection getCollection(){
         return col;
     }
+    
+    public DBCollection getCollection(String collectionName){
+        return db.getCollection(collectionName);
+    }
             
 }

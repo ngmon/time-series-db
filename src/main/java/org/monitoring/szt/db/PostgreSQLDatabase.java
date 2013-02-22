@@ -8,8 +8,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.monitoring.szt.model.RawEvent;
 
 /**
@@ -26,8 +24,8 @@ public class PostgreSQLDatabase implements Database {
 
     public PostgreSQLDatabase() {
         try {
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/postgres", "postgres", "root");
+            Class.forName("org.postgresql.Driver");                     //postgres originally
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost:5432/sztmonitoring", "postgres", "root");
             mapper = new PostgreSQLDatabaseMapper();
         } catch (SQLException ex) {
             ex.printStackTrace();
@@ -93,6 +91,7 @@ public class PostgreSQLDatabase implements Database {
             st.setLong(1, simulationId);
             st.setTimestamp(2, from);
             st.setTimestamp(3, to);
+            //System.out.println(st.toString());
             ResultSet result = st.executeQuery();
             return mapper.getResult(result);
         } catch (SQLException ex) {

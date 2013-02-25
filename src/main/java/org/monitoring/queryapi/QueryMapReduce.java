@@ -312,6 +312,7 @@ public class QueryMapReduce implements Query {
         or.add(BasicDBObjectBuilder.start().push("f").append(Filter.NE, CachePoint.Flag.START.get()).get());
         DBObject match = BasicDBObjectBuilder.start()
                 .push("_id.t").append(Filter.GTE, start).append(Filter.LT, end).pop()
+                .append("_id.gt", groupTime)
                 .append("$or", or)
                 .get();
         
@@ -371,7 +372,8 @@ public class QueryMapReduce implements Query {
         }
         //TODO: missing matcher
         DBObject finder = BasicDBObjectBuilder.start().push("_id.t")
-                .append(Filter.GTE, start).append(Filter.LT,end).get();
+                .append(Filter.GTE, start).append(Filter.LT,end).pop()
+                .append("_id.gt", groupTime).get();
         return wrap("result", cacheMetrics.find(finder).toArray());
     }
 

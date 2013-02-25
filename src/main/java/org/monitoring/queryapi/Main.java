@@ -18,7 +18,7 @@ public class Main {
         Manager m = new Manager("192.168.219.129",27017, "postgres");
         
         QueryMapReduce q = (QueryMapReduce) m.createQueryOnCollection("test2");
-        q.setGroupTime(1000); 
+        q.setGroupTime(10000); 
         
         Calendar cal = new GregorianCalendar(2013, 1, 13, 16, 0, 0);
         Date start = cal.getTime();

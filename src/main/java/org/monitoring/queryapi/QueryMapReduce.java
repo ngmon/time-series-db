@@ -29,6 +29,7 @@ public class QueryMapReduce implements Query {
     private int limit = 0;
     private Date start = null, end = null;
     private int groupTime = 1000;
+    private CachePointMapper dbmapper = new CachePointMapper();
 
     public QueryMapReduce(DBCollection col) {
         this.col = col;
@@ -70,13 +71,13 @@ public class QueryMapReduce implements Query {
     public DBObject getMatchQuery() {
         BasicDBObjectBuilder queryLocal = new BasicDBObjectBuilder();
         if (start != null) {
-            queryLocal.push("t").append("$gte", start);
+            queryLocal.push("t").append(Filter.GTE, start);
         }
         if (end != null) {
             if (queryLocal.isEmpty()) {
-                queryLocal.push("t").append("$lte", end);
+                queryLocal.push("t").append(Filter.LTE, end);
             } else {
-                queryLocal.append("$lte", end);
+                queryLocal.append(Filter.LTE, end);
             }
         }
         DBObject out = query.get();
@@ -87,13 +88,13 @@ public class QueryMapReduce implements Query {
     private DBObject getMatchQueryWithSubTime(Date qStart, Date qEnd) {
         BasicDBObjectBuilder queryLocal = new BasicDBObjectBuilder();
         if (qStart != null) {
-            queryLocal.push("t").append("$gte", qStart);
+            queryLocal.push("t").append(Filter.GTE, qStart);
         }
         if (qEnd != null) {
             if (queryLocal.isEmpty()) {
-                queryLocal.push("t").append("$lt", qEnd);
+                queryLocal.push("t").append(Filter.LT, qEnd);
             } else {
-                queryLocal.append("$lt", qEnd);
+                queryLocal.append(Filter.LT, qEnd);
             }
         }
         DBObject out = query.get();
@@ -162,8 +163,8 @@ public class QueryMapReduce implements Query {
 
         for (DBObject result : results) {
             dates.add(
-                    BasicDBObjectBuilder.start().push("t").append("$lte", (Date) result.get("t"))
-                    .append("$gte", new Date(((Date) result.get("t")).getTime() - 1000)).get());
+                    BasicDBObjectBuilder.start().push("t").append(Filter.LTE, (Date) result.get("t"))
+                    .append(Filter.GTE, new Date(((Date) result.get("t")).getTime() - 1000)).get());
             num++;
         }
         if (num > 0) {
@@ -236,120 +237,145 @@ public class QueryMapReduce implements Query {
         return wrap("result", aggregate(map, reduce));
     }
 
-    private int getInclusiveBeforePoint(int point){
+    private CachePoint.Flag getInclusiveBeforePoint(Date date){
         DBCollection cache = col.getDB().getCollection("cache");
-        DBObject beforeStartQuery = BasicDBObjectBuilder.start().push("_id")
-                .append("$lte", point).get();
-        DBObject order = new BasicDBObject("_id", -1);
+        DBObject beforeStartQuery = BasicDBObjectBuilder.start().push("_id.t")
+                .append(Filter.LTE, date).get();
+        DBObject order = new BasicDBObject("_id.t", -1);
         List<DBObject> beforeStartResponseList = cache.find(beforeStartQuery).sort(order).limit(1).toArray();
         if(beforeStartResponseList.isEmpty()){
-            return 3;
+            return CachePoint.Flag.NONE;
         }else{
-            return (Integer) beforeStartResponseList.get(0).get("f");
+            return dbmapper.fromDB(beforeStartResponseList.get(0)).getFlag();
         }
     }
     
-    private boolean isStartInclusiveBeforePoint(int point) {
-        return getInclusiveBeforePoint(point)==0;
+    private boolean isStartInclusiveBeforePoint(Date date) {
+        return getInclusiveBeforePoint(date) == CachePoint.Flag.START;
     }
     
-    private int getInclusiveAfterPoint(int point){
+    private CachePoint.Flag getInclusiveAfterPoint(Date date){
         DBCollection cache = col.getDB().getCollection("cache");
-        DBObject afterEndQuery = BasicDBObjectBuilder.start().push("_id")
-                .append("$gte", point).get();
-        DBObject order = new BasicDBObject("_id", 1);
+        DBObject afterEndQuery = BasicDBObjectBuilder.start().push("_id.t")
+                .append(Filter.GTE, date).get();
+        DBObject order = new BasicDBObject("_id.t", 1);
         List<DBObject> afterEndResponseList = cache.find(afterEndQuery).sort(order).limit(1).toArray();
         if(afterEndResponseList.isEmpty()){
-            return 3;
+            return CachePoint.Flag.NONE;
         }else{
-            return (Integer) afterEndResponseList.get(0).get("f");
+            return dbmapper.fromDB(afterEndResponseList.get(0)).getFlag();
         }
     }
     
-    private boolean isEndInclusiveAfterPoint(int point) {
-        return getInclusiveAfterPoint(point)==1;
+    private boolean isEndInclusiveAfterPoint(Date date) {
+        return getInclusiveAfterPoint(date)==CachePoint.Flag.START;
     }
     
-    private int getAtPoint(int point){
+    private CachePoint.Flag getAtPoint(Date date){
         DBCollection cache = col.getDB().getCollection("cache");
-        DBObject atQuery = BasicDBObjectBuilder.start().append("_id", point).get();
+        DBObject atQuery = BasicDBObjectBuilder.start().append("_id.t", date).get();
         List<DBObject> atResponseList = cache.find(atQuery).limit(1).toArray();
         if(atResponseList.isEmpty()){
-            return 3;
+            return CachePoint.Flag.NONE;
         }else{
-            return (Integer) atResponseList.get(0).get("f");
+            return dbmapper.fromDB(atResponseList.get(0)).getFlag();
         }
     }
+    
+    public DBObject avgC(String field){
+        String map =
+                "function() {"
+                + "var id;"
+                + "id = {t:this.t, op: \"avg\",field:\"" + field + "\",gt:" + groupTime + ",match:" + query.get() + "};"
+                + "id.t.setTime(id.t.getTime()-id.t.getTime()%" + groupTime + ");"
+                + "emit(id, this.d." + field + ");"
+                + "};";
 
-    public DBObject cache(int start, int end) {
+        String reduce =
+                "function(id, values) {"
+                + "return Array.avg(values);"
+                + "};";
+
+        String finalize = "";
+        return cache("avg", field, map, reduce, finalize, start, end);
+    }
+
+    private DBObject cache(String op, String field, String map, String reduce, String finalize, Date start, Date end) {
+        final CachePoint CACHE_POINT_START = new CachePoint(start, op, field, CachePoint.Flag.START, groupTime);
+        final CachePoint CACHE_POINT_END = new CachePoint(end, op, field, CachePoint.Flag.END, groupTime);
+        
         DBCollection cache = col.getDB().getCollection("cache");
+        DBCollection cacheMetrics = col.getDB().getCollection("cache.metrics");
         BasicDBList or = new BasicDBList();
-        or.add(BasicDBObjectBuilder.start().push("_id").append("$ne", start).get());
-        or.add(BasicDBObjectBuilder.start().push("f").append("$ne", 0).get());
+        //TODO: missing matcher op,field
+        or.add(BasicDBObjectBuilder.start().push("_id.t").append(Filter.NE, start).get());
+        or.add(BasicDBObjectBuilder.start().push("f").append(Filter.NE, CachePoint.Flag.START.get()).get());
         DBObject match = BasicDBObjectBuilder.start()
-                .push("_id").append("$gte", start).append("$lt", end).pop()
+                .push("_id.t").append(Filter.GTE, start).append(Filter.LT, end).pop()
                 .append("$or", or)
                 .get();
-        System.out.println(match);
+        
         DBCursor cursor = cache.find(match);
         if (cursor.hasNext()) { //not empty response -> partially cached
             while (cursor.hasNext()) {
-                DBObject point1, point2;
-                point1 = cursor.next();
-                if ((Integer) point1.get("f") == 0 && (Integer) point1.get("_id") == start){
+                CachePoint point1, point2;
+                point1 = dbmapper.fromDB(cursor.next());
+                if (point1.getFlag() == CachePoint.Flag.START && point1.getDate() == start){
                     continue;
                 }
-                if ((Integer) point1.get("f") == 0) {
-                    System.out.println("//mp(start,point.getTime)");
+                if (point1.getFlag() == CachePoint.Flag.START) {
+                    aggregate(map, reduce, finalize, "cache.metrics", MapReduceCommand.OutputType.MERGE, start,point1.getDate());
                     continue;
                 }
                 if (cursor.hasNext()) {
-                    point2 = cursor.next();
-                    System.out.println("//mp(point1.getTime,point2.getTime)");
+                    point2 = dbmapper.fromDB(cursor.next());
+                    aggregate(map, reduce, finalize, "cache.metrics", MapReduceCommand.OutputType.MERGE,point1.getDate(),point2.getDate());
                 } else {
-                    System.out.println("//mp(point1.getTime,end)"+point1.get("_id"));
+                    aggregate(map, reduce, finalize, "cache.metrics", MapReduceCommand.OutputType.MERGE,point1.getDate(),end);
                 }
             }
-            int beforeStart = getInclusiveBeforePoint(start);
-            if (beforeStart == 0) {
+            CachePoint.Flag beforeStart = getInclusiveBeforePoint(start);
+            if (beforeStart == CachePoint.Flag.START) {
                 //do nothing with start
-            } else if (beforeStart == 1) {
+            } else if (beforeStart == CachePoint.Flag.END) {
                 //remove old end
-                cache.remove(new BasicDBObject("_id", start));
+                cache.remove(new BasicDBObject("_id.t", start));
             } else {
                 //insert start
-                cache.save(BasicDBObjectBuilder.start().append("_id", start).append("f", 0).get());
+                cache.save(dbmapper.toDB(CACHE_POINT_START));
             }
-            cache.remove(BasicDBObjectBuilder.start().push("_id").append("$gt", start).append("$lte", end).get());
+            cache.remove(BasicDBObjectBuilder.start().push("_id.t").append(Filter.GT, start).append(Filter.LTE, end).get());
             
-            int afterEnd = getInclusiveAfterPoint(end);
-            if(afterEnd == 1){
+            CachePoint.Flag afterEnd = getInclusiveAfterPoint(end);
+            if(afterEnd == CachePoint.Flag.END){
                 System.out.println("//do not add end");
             }else{                
                 System.out.println("//insert end");
-                cache.save(BasicDBObjectBuilder.start().append("_id", end).append("f", 1).get());
+                cache.save(dbmapper.toDB(CACHE_POINT_END));
             }
             
         } else { //empty response -> all cached or nothing cached
             if (isStartInclusiveBeforePoint(start)) {
                 System.out.println("//all cached, ready for query from cache");
-            } else if(getAtPoint(end) == 0){
-                cache.remove(new BasicDBObject("_id", end));
-                cache.insert(BasicDBObjectBuilder.start().append("_id", start).append("f", 0).get());
-                System.out.println("//all cached, remove end");
+            } else if(getAtPoint(end) == CachePoint.Flag.START){
+                cache.remove(new BasicDBObject("_id.t", end));
+                cache.save(dbmapper.toDB(CACHE_POINT_START));
+                System.out.println("//nothing cached, remove end");
+                aggregate(map, reduce, finalize, "cache.metrics", MapReduceCommand.OutputType.MERGE,start,end);
             }else {
                 System.out.println("//nothing cached, need to recompute");
-
-                DBObject[] batch = new DBObject[2];
-                batch[0] = BasicDBObjectBuilder.start().append("_id", start).append("f", 0).get();
-                batch[1] = BasicDBObjectBuilder.start().append("_id", end).append("f", 1).get();
-
-                cache.insert(batch);
+                aggregate(map, reduce, finalize, "cache.metrics", MapReduceCommand.OutputType.MERGE,start,end);
+                cache.save(dbmapper.toDB(CACHE_POINT_START));
+                cache.save(dbmapper.toDB(CACHE_POINT_END));
             }
         }
-        return wrap("result", new BasicDBObject());
+        //TODO: missing matcher
+        DBObject finder = BasicDBObjectBuilder.start().push("_id.t")
+                .append(Filter.GTE, start).append(Filter.LT,end).get();
+        return wrap("result", cacheMetrics.find(finder).toArray());
     }
 
+    @Deprecated
     public DBObject cacheAvg(String field) {
 
         long startTime = start.getTime() - start.getTime() % groupTime;

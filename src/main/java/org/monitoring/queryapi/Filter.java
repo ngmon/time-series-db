@@ -8,6 +8,12 @@ package org.monitoring.queryapi;
  *
  * @author Michal
  */
-public enum Filter {
+public class Filter {
     
+    public static final String NE = "$ne";
+    public static final String GTE = "$gte";
+    public static final String GT = "$gt";
+    public static final String LTE = "$lte";
+    public static final String LT = "$lt";
+        
 }

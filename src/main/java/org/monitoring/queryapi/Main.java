@@ -2,7 +2,9 @@ package org.monitoring.queryapi;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 /**
  *
@@ -15,9 +17,16 @@ public class Main {
     
         Manager m = new Manager("192.168.219.129",27017, "postgres");
         
-        QueryMapReduce q = (QueryMapReduce) m.createQueryOnCollection("test2")
-                .fromDate(new Date(1360778279000L)).toDate(new Date(1360778289000L));
-        q.setGroupTime(1000);     
+        QueryMapReduce q = (QueryMapReduce) m.createQueryOnCollection("test2");
+        q.setGroupTime(1000); 
+        
+        Calendar cal = new GregorianCalendar(2013, 1, 13, 16, 0, 0);
+        Date start = cal.getTime();
+        
+        cal = new GregorianCalendar(2013, 1, 13, 19, 0, 0);
+        Date end = cal.getTime();
+        
+        q.fromDate(start).toDate(end);
         
 //        DBObject ob =  q.difference(new BasicDBObject(),"d.v");  
 //        System.out.println(ob);
@@ -29,10 +38,9 @@ public class Main {
 //        for(Object ob : (Iterable)ob2.get("result")){
 //            System.out.println(ob);
 //        }
-        
-        DBObject ob3 = q.cache(1, 20);
-        System.out.println(ob3);
-        
+       
+        DBObject ob3 = q.avgC("v");
+        System.out.println(ob3);      
         
         
         

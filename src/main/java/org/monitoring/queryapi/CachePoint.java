@@ -6,7 +6,7 @@ import java.util.Date;
  *
  * @author Michal Dubravcik
  */
-public class CachePoint {
+public class CachePoint extends CacheMatcher {
 
     public enum Flag {
 
@@ -24,21 +24,17 @@ public class CachePoint {
         }
     }
     
-    private Date date;
-    private String operation;
-    private String match;
     private CachePoint.Flag flag;
-    private int groupTime;
+    private Date date;
 
-    public CachePoint() {
-    }
-
-    public CachePoint(Date date, String operation, String match, CachePoint.Flag flag, int groupTime) {
+    public CachePoint(){
+        super();
+    };
+    
+    public CachePoint(Date date, String operation, String field, String match, CachePoint.Flag flag, int groupTime) {
+        super(operation, field, match, groupTime);
         this.date = date;
-        this.operation = operation;
-        this.match = match;
         this.flag = flag;
-        this.groupTime = groupTime;
     }
 
     public Date getDate() {
@@ -49,35 +45,11 @@ public class CachePoint {
         this.date = date;
     }
 
-    public String getOperation() {
-        return operation;
-    }
-
-    public void setOperation(String operation) {
-        this.operation = operation;
-    }
-
-    public String getMatch() {
-        return match;
-    }
-
-    public void setMatch(String match) {
-        this.match = match;
-    }
-
-    public CachePoint.Flag getFlag() {
+    public Flag getFlag() {
         return flag;
     }
 
-    public void setFlag(CachePoint.Flag flag) {
+    public void setFlag(Flag flag) {
         this.flag = flag;
-    }
-
-    public int getGroupTime() {
-        return groupTime;
-    }
-
-    public void setGroupTime(int groupTime) {
-        this.groupTime = groupTime;
     }
 }

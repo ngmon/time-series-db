@@ -120,9 +120,9 @@ public class QueryMapReduce implements Query {
     public DBObject difference(DBObject match, String keyForDifference) {
         String keyInner = keyForDifference.substring(keyForDifference.lastIndexOf(".") + 1);
 
-        DBObject project = BasicDBObjectBuilder.start().push("$project")
+        DBObject project = BasicDBObjectBuilder.start().push(Aggregation.PROJECT)
                 .append("_id", 0).append("t", 1).append(keyInner, "$" + keyForDifference).get();
-        Iterable<DBObject> list = col.aggregate(new BasicDBObject("$match", match), project).results();
+        Iterable<DBObject> list = col.aggregate(new BasicDBObject(Aggregation.MATCH, match), project).results();
 
         int i = 0;
         Number numPre = new Double("0");
@@ -169,18 +169,18 @@ public class QueryMapReduce implements Query {
         }
         if (num > 0) {
             DBObject match = BasicDBObjectBuilder.start()
-                    .append("$match", new BasicDBObject("$or", dates)).get();
+                    .append(Aggregation.MATCH, new BasicDBObject(Aggregation.OR, dates)).get();
 
             for (String groupKey : groupBy) {
                 builder.append(groupKey, "$" + groupKey);
             }
             DBObject groupInner = builder.get();
-            DBObject group = BasicDBObjectBuilder.start().push("$group").append("_id", groupInner)
-                    .push("count").append("$sum", 1).get();
-            DBObject order = BasicDBObjectBuilder.start().push("$sort").append("count", -1).get();
-            DBObject project = BasicDBObjectBuilder.start().push("$project")
+            DBObject group = BasicDBObjectBuilder.start().push(Aggregation.GROUP).append("_id", groupInner)
+                    .push("count").append(Aggregation.SUM, 1).get();
+            DBObject order = BasicDBObjectBuilder.start().push(Aggregation.SORT).append("count", -1).get();
+            DBObject project = BasicDBObjectBuilder.start().push(Aggregation.PROJECT)
                     .append("_id", 0).append("count", 1).append("group", "$_id").get();
-            DBObject limiter = new BasicDBObject("$limit", limit);
+            DBObject limiter = new BasicDBObject(Aggregation.LIMIT, limit);
 
             reasons = col.aggregate(match, group, order, limiter, project).results();
         } else {
@@ -283,10 +283,12 @@ public class QueryMapReduce implements Query {
     }
     
     public DBObject avgC(String field){
+        String op = "avg";
+        CacheMatcher cm = new CacheMatcher(op, field, query.get().toString(), groupTime);
         String map =
                 "function() {"
                 + "var id;"
-                + "id = {t:this.t, op: \"avg\",field:\"" + field + "\",gt:" + groupTime + ",match:" + query.get() + "};"
+                + "id = {t:this.t, match: \"" + cm.getMD5() + "\",gt:" + groupTime +  "};"
                 + "id.t.setTime(id.t.getTime()-id.t.getTime()%" + groupTime + ");"
                 + "emit(id, this.d." + field + ");"
                 + "};";
@@ -297,26 +299,49 @@ public class QueryMapReduce implements Query {
                 + "};";
 
         String finalize = "";
-        return cache("avg", field, map, reduce, finalize, start, end);
+        return cache(cm, map, reduce, finalize);
+    }
+    
+    public DBObject sumC(String field){
+        String op = "sum";
+        CacheMatcher cm = new CacheMatcher(op, field, query.get().toString(), groupTime);
+        String map =
+                "function() {"
+                + "var id;"
+                + "id = {t:this.t, match: \"" + cm.getMD5() + "\",gt:" + groupTime +  "};"
+                + "id.t.setTime(id.t.getTime()-id.t.getTime()%" + groupTime + ");"
+                + "emit(id, this.d." + field + ");"
+                + "};";
+
+        String reduce =
+                "function(id, values) {"
+                + "return Array.sum(values);"
+                + "};";
+
+        String finalize = "";
+        return cache(cm, map, reduce, finalize);
     }
 
-    private DBObject cache(String op, String field, String map, String reduce, String finalize, Date start, Date end) {
-        final CachePoint CACHE_POINT_START = new CachePoint(start, op, field, CachePoint.Flag.START, groupTime);
-        final CachePoint CACHE_POINT_END = new CachePoint(end, op, field, CachePoint.Flag.END, groupTime);
+    private DBObject cache(CacheMatcher cm, String map, String reduce, String finalize) {
+        final CachePoint CACHE_POINT_START = new CachePoint(start, cm.getOperation(), cm.getField(),query.get().toString(), CachePoint.Flag.START, groupTime);
+        final CachePoint CACHE_POINT_END = new CachePoint(end, cm.getOperation(), cm.getField(),query.get().toString(), CachePoint.Flag.END, groupTime);
         
+        DBCollection cacheFlags = col.getDB().getCollection("cache.flags");
         DBCollection cache = col.getDB().getCollection("cache");
-        DBCollection cacheMetrics = col.getDB().getCollection("cache.metrics");
-        BasicDBList or = new BasicDBList();
-        //TODO: missing matcher op,field
+        
+        BasicDBList or = new BasicDBList();        
         or.add(BasicDBObjectBuilder.start().push("_id.t").append(Filter.NE, start).get());
         or.add(BasicDBObjectBuilder.start().push("f").append(Filter.NE, CachePoint.Flag.START.get()).get());
+        
         DBObject match = BasicDBObjectBuilder.start()
                 .push("_id.t").append(Filter.GTE, start).append(Filter.LT, end).pop()
+                .append("_id.match", cm.getMD5())
                 .append("_id.gt", groupTime)
                 .append("$or", or)
                 .get();
         
-        DBCursor cursor = cache.find(match);
+        DBCursor cursor = cacheFlags.find(match);
+        
         if (cursor.hasNext()) { //not empty response -> partially cached
             while (cursor.hasNext()) {
                 CachePoint point1, point2;
@@ -325,56 +350,54 @@ public class QueryMapReduce implements Query {
                     continue;
                 }
                 if (point1.getFlag() == CachePoint.Flag.START) {
-                    aggregate(map, reduce, finalize, "cache.metrics", MapReduceCommand.OutputType.MERGE, start,point1.getDate());
+                    aggregate(map, reduce, finalize, "cache", MapReduceCommand.OutputType.MERGE, start,point1.getDate());
                     continue;
                 }
                 if (cursor.hasNext()) {
                     point2 = dbmapper.fromDB(cursor.next());
-                    aggregate(map, reduce, finalize, "cache.metrics", MapReduceCommand.OutputType.MERGE,point1.getDate(),point2.getDate());
+                    aggregate(map, reduce, finalize, "cache", MapReduceCommand.OutputType.MERGE,point1.getDate(),point2.getDate());
                 } else {
-                    aggregate(map, reduce, finalize, "cache.metrics", MapReduceCommand.OutputType.MERGE,point1.getDate(),end);
+                    aggregate(map, reduce, finalize, "cache", MapReduceCommand.OutputType.MERGE,point1.getDate(),end);
                 }
             }
+            
             CachePoint.Flag beforeStart = getInclusiveBeforePoint(start);
             if (beforeStart == CachePoint.Flag.START) {
                 //do nothing with start
             } else if (beforeStart == CachePoint.Flag.END) {
                 //remove old end
-                cache.remove(new BasicDBObject("_id.t", start));
+                cacheFlags.remove(new BasicDBObject("_id.t", start));
             } else {
                 //insert start
-                cache.save(dbmapper.toDB(CACHE_POINT_START));
+                cacheFlags.save(dbmapper.toDB(CACHE_POINT_START));
             }
-            cache.remove(BasicDBObjectBuilder.start().push("_id.t").append(Filter.GT, start).append(Filter.LTE, end).get());
+            
+            cacheFlags.remove(BasicDBObjectBuilder.start().push("_id.t").append(Filter.GT, start).append(Filter.LTE, end).get());
             
             CachePoint.Flag afterEnd = getInclusiveAfterPoint(end);
             if(afterEnd == CachePoint.Flag.END){
-                System.out.println("//do not add end");
+                //System.out.println("//do not add end");
             }else{                
-                System.out.println("//insert end");
-                cache.save(dbmapper.toDB(CACHE_POINT_END));
+                //System.out.println("//insert end");
+                cacheFlags.save(dbmapper.toDB(CACHE_POINT_END));
             }
             
         } else { //empty response -> all cached or nothing cached
             if (isStartInclusiveBeforePoint(start)) {
                 System.out.println("//all cached, ready for query from cache");
             } else if(getAtPoint(end) == CachePoint.Flag.START){
-                cache.remove(new BasicDBObject("_id.t", end));
-                cache.save(dbmapper.toDB(CACHE_POINT_START));
-                System.out.println("//nothing cached, remove end");
-                aggregate(map, reduce, finalize, "cache.metrics", MapReduceCommand.OutputType.MERGE,start,end);
+                cacheFlags.remove(new BasicDBObject("_id.t", end));
+                cacheFlags.save(dbmapper.toDB(CACHE_POINT_START));
+                //System.out.println("//nothing cached, remove end");
+                aggregate(map, reduce, finalize, "cache", MapReduceCommand.OutputType.MERGE,start,end);
             }else {
-                System.out.println("//nothing cached, need to recompute");
-                aggregate(map, reduce, finalize, "cache.metrics", MapReduceCommand.OutputType.MERGE,start,end);
-                cache.save(dbmapper.toDB(CACHE_POINT_START));
-                cache.save(dbmapper.toDB(CACHE_POINT_END));
+                //System.out.println("//nothing cached, need to recompute");
+                aggregate(map, reduce, finalize, "cache", MapReduceCommand.OutputType.MERGE,start,end);
+                cacheFlags.save(dbmapper.toDB(CACHE_POINT_START));
+                cacheFlags.save(dbmapper.toDB(CACHE_POINT_END));
             }
         }
-        //TODO: missing matcher
-        DBObject finder = BasicDBObjectBuilder.start().push("_id.t")
-                .append(Filter.GTE, start).append(Filter.LT,end).pop()
-                .append("_id.gt", groupTime).get();
-        return wrap("result", cacheMetrics.find(finder).toArray());
+        return wrap("result", cache.find(match).toArray());
     }
 
     @Deprecated
@@ -446,15 +469,15 @@ public class QueryMapReduce implements Query {
                 .find().sort(new BasicDBObject("_id", 1)).toArray());
     }
 
-    public DBObject min(int groupTime, String field) {
-        return minmax(groupTime, field, "min");
+    public DBObject min(String field) {
+        return minmax(field, "min");
     }
 
-    public DBObject max(int groupTime, String field) {
-        return minmax(groupTime, field, "max");
+    public DBObject max(String field) {
+        return minmax(field, "max");
     }
 
-    private DBObject minmax(int groupTime, String field, String type) {
+    private DBObject minmax(String field, String type) {
         String map =
                 "function() {"
                 + "time = this.t;"
@@ -470,7 +493,7 @@ public class QueryMapReduce implements Query {
         return wrap("result", aggregate(map, reduce));
     }
 
-    public DBObject median(int groupTime, String field) {
+    public DBObject median(String field) {
         String map =
                 "function() {"
                 + "time = this.t;"
@@ -542,8 +565,8 @@ public class QueryMapReduce implements Query {
 
         MapReduceOutput out = col.mapReduce(mapReduceCmd);
 
-        System.out.println(out.getCommandResult());
-        System.out.println(out.getCommand());
+        //System.out.println(out.getCommandResult());
+        //System.out.println(out.getCommand());
 
         return out.results();
     }
@@ -563,4 +586,5 @@ public class QueryMapReduce implements Query {
     private DBObject wrap(String firstKey, Object firstValue) {
         return new BasicDBObject(firstKey, firstValue);
     }
+    
 }

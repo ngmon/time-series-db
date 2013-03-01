@@ -39,7 +39,7 @@ public class Main {
 //            System.out.println(ob);
 //        }
        
-        DBObject ob3 = q.avgC("v");
+        DBObject ob3 = q.sumC("v");
         System.out.println(ob3);      
         
         

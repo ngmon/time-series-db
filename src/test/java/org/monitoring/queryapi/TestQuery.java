@@ -9,7 +9,7 @@ import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
 import org.junit.AfterClass;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 /**
@@ -23,7 +23,7 @@ public class TestQuery {
     static Morphia morphia = new Morphia();
     static DBCollection col;
     
-    final static int NUM = 10;
+    final static int NUM = 1;
 
     @BeforeClass    
     public static void setUp() {
@@ -120,7 +120,9 @@ public class TestQuery {
     public void median() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        for(DBObject ob : (Iterable<DBObject>) q.setStep(100000).avg("v").get("result")){
+        DBObject res = (DBObject) q.setStep(100000).avg("v").get("result");
+        assertNotEquals("Empty result",0, res.toMap().size());
+        for(DBObject ob : (Iterable<DBObject>) res){
             assertEquals(new Integer(NUM/2), ob.get("value"));
             i++;
         }

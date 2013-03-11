@@ -207,7 +207,12 @@ public class Query {
      * @return DBObject with time and counts in array on key result
      */
     public DBObject count() {
-        String map = "count_map()";
+        String map = "function() {        " +
+"        time = this.time;" +
+"        time.setTime(time.getTime()-time.getTime()%step);" +
+"        emit(time, 1);        " +
+"    }";
+                //"count_map()";
         String reduce = "count_reduce()";
         Map<String, Object> scope = getScope(step);
         return wrap("result", mapReduce(map, reduce, scope));

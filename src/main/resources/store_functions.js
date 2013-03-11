@@ -4,10 +4,10 @@ var f = new Array();
 f.push({
     _id:"map", 
     value : 
-    function() { 
+    function() {        
         time = this.time;
         time.setTime(time.getTime()-time.getTime()%step);
-        emit(time, this.d[field]);
+        emit(time, this);        
     }
 });
 
@@ -28,10 +28,10 @@ f.push({
 f.push({
     _id:"count_map", 
     value : 
-    function() { 
-        var time = this.time;
+    function() {        
+        time = this.time;
         time.setTime(time.getTime()-time.getTime()%step);
-        emit(time, 1);
+        emit(time, this.data);  
     }
 });
 
@@ -52,7 +52,7 @@ f.push({
 f.push({
     _id:"count_reduce", 
     value : 
-    function(id, values) { 
+    function count_reduce(id, values) { 
         return values.length; 
     }
 });
@@ -96,5 +96,5 @@ f.push({
         return (values.length%2!=0)?values[(1+values.length)/2-1]:(values[values.length/2-1]+values[values.length/2])/2;
     }
 });
-
+db.system.js.remove();
 db.system.js.save(f);

@@ -207,7 +207,7 @@ public class Query {
      * @return DBObject with time and counts in array on key result
      */
     public DBObject count() {
-
+        //TODO - server side not working
         String map = "function() { "
                 + "        time = this.time;"
                 + "        time.setTime(time.getTime()-time.getTime()%step);"
@@ -217,7 +217,7 @@ public class Query {
         String reduce = "function(id, values) { "
                 + "        return values.length; "
                 + "    }";
-        //"count_reduce()";
+        //reduce = "count_reduce()";
         Map<String, Object> scope = getScope(step);
         return wrap("result", mapReduce(map, reduce, scope));
     }

@@ -207,27 +207,22 @@ public class Query {
      * @return DBObject with time and counts in array on key result
      */
     public DBObject count() {
-        String map = "function() {        " +
-"        time = this.time;" +
-"        time.setTime(time.getTime()-time.getTime()%step);" +
-"        emit(time, 1);        " +
-"    }";
-                //"count_map()";
-        String reduce = "count_reduce()";
+        String map = "count_map(this)";
+        String reduce = "function(id,values){ return count_reduce(id, values);}";
         Map<String, Object> scope = getScope(step);
         return wrap("result", mapReduce(map, reduce, scope));
     }
 
     /**
-     * Compute average value on specified field in interval specified by step taking into account
+     * Compute average from values on specified field in interval specified by step taking into account
      * match, date boundaries and limit
      *
      * @param field
      * @return DBObject with times and avgs in array on key result
      */
     public DBObject avg(String field) {
-        String map = "map()";
-        String reduce = "avg_reduce()";
+        String map = "map(this)";
+        String reduce = "function(id, values){ return avg_reduce(id, values);}";
         Map<String, Object> scope = getScope(field, step);
         return wrap("result", mapReduce(map, reduce, scope));
     }
@@ -240,36 +235,36 @@ public class Query {
      * @return DBObject with times and sums in array on key result
      */
     public DBObject sum(String field) {
-        String map = "map()";
-        String reduce = "sum_reduce()";
+        String map = "map(this)";
+        String reduce = "function(id,values){ return sum_reduce(id,values);}";
         Map<String, Object> scope = getScope(field, step);
         return wrap("result", mapReduce(map, reduce, scope));
     }
 
     /**
-     * Compute minimal value on specified field in interval specified by step taking into account
+     * Find minimal value from values of specified field in interval specified by step taking into account
      * match, date boundaries and limit
      *
      * @param field
      * @return DBObject with times and mins in array on key result
      */
     public DBObject min(String field) {
-        String map = "map()";
-        String reduce = "min_reduce()";
+        String map = "map(this)";
+        String reduce = "function(id,values){ return min_reduce(id, values);}";
         Map<String, Object> scope = getScope(field, step);
         return wrap("result", mapReduce(map, reduce, scope));
     }
 
     /**
-     * Compute maximal value on specified field in interval specified by step taking into account
+     * Find maximal value from values on specified field in interval specified by step taking into account
      * match, date boundaries and limit
      *
      * @param field
      * @return DBObject with times and maxs in array on key result
      */
     public DBObject max(String field) {
-        String map = "map()";
-        String reduce = "max_reduce()";
+        String map = "map(this)";
+        String reduce = "function(id,values){ return max_reduce(id, values);}";
         Map<String, Object> scope = getScope(field, step);
         return wrap("result", mapReduce(map, reduce, scope));
     }
@@ -282,19 +277,19 @@ public class Query {
      * @return DBObject with times and medians in array on key result
      */
     public DBObject median(String field) {
-        String map = "map()";
-        String reduce = "median_reduce()";
+        String map = "map(this)";
+        String reduce = "function(id,values){ return median_reduce(id, values);}";
         /* bind global variables for map-reduce on serve-side */
         Map<String, Object> scope = getScope(field, step);
         return wrap("result", mapReduce(map, reduce, scope));
     }
 
     public DBObject countCached() {
-        String map = "count_map_cached()";
-        String reduce = "count_reduce()";
+        String map = "count_map_cached(this)";
+        String reduce = "function(id,values){ return count_reduce(id, values);}";
         String finalize = "";
         /* create cache identifier */
-        String field = "";
+        String field = ""; //count does not need field
         CacheMatcher cm = new CacheMatcher("count", field, query.get().toString(), step);
         /* bind global variables for map-reduce on serve-side */
         Map<String, Object> scope = getScope(field, step, cm.getMD5());
@@ -303,8 +298,8 @@ public class Query {
 
     public DBObject avgCached(String field) {
         /* map, reduce, finalize JS functions (preferably stored in Mongo system.js) */
-        String map = "map_cached()";
-        String reduce = "avg_reduce()";
+        String map = "map_cached(this)";
+        String reduce = "function(id,values){ return avg_reduce(id, values);}";
         String finalize = "";
         /* create cache identifier */
         CacheMatcher cm = new CacheMatcher("avg", field, query.get().toString(), step);
@@ -315,8 +310,8 @@ public class Query {
 
     public DBObject sumCached(String field) {
         /* map, reduce, finalize JS functions (preferably stored in Mongo system.js) */
-        String map = "map_cached()";
-        String reduce = "sum_reduce()";
+        String map = "map_cached(this)";
+        String reduce = "function(id,values){ return sum_reduce(id, values);}";
         String finalize = "";
         /* create cache identifier */
         CacheMatcher cm = new CacheMatcher("sum", field, query.get().toString(), step);
@@ -327,8 +322,8 @@ public class Query {
 
     public DBObject minCached(String field) {
         /* map, reduce, finalize JS functions (preferably stored in Mongo system.js) */
-        String map = "map_cached()";
-        String reduce = "min_reduce()";
+        String map = "map_cached(this)";
+        String reduce = "function(id,values){ return min_reduce(id, values);}";
         String finalize = "";
         /* create cache identifier */
         CacheMatcher cm = new CacheMatcher("min", field, query.get().toString(), step);
@@ -339,8 +334,8 @@ public class Query {
 
     public DBObject maxCached(String field) {
         /* map, reduce, finalize JS functions (preferably stored in Mongo system.js) */
-        String map = "map_cached()";
-        String reduce = "max_reduce()";
+        String map = "map_cached(this)";
+        String reduce = "function(id,values){ return max_reduce(id, values);}";
         String finalize = "";
         /* create cache identifier */
         CacheMatcher cm = new CacheMatcher("max", field, query.get().toString(), step);
@@ -351,8 +346,8 @@ public class Query {
 
     public DBObject medianCached(String field) {
         /* map, reduce, finalize JS functions (preferably stored in Mongo system.js) */
-        String map = "map_cached()";
-        String reduce = "median_reduce()";
+        String map = "map_cached(this)";
+        String reduce = "function(id,values){ return median_reduce(id, values);}";
         String finalize = "";
         /* create cache identifier */
         CacheMatcher cm = new CacheMatcher("median", field, query.get().toString(), step);

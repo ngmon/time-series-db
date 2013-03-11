@@ -1,46 +1,45 @@
 var f = new Array();
 
-
 f.push({
     _id:"map", 
     value : 
-    function() {        
-        time = this.time;
+    function(x) {        
+        time = x.time;
         time.setTime(time.getTime()-time.getTime()%step);
-        emit(time, this);        
+        emit(time, x.data[field]);        
     }
 });
 
 f.push({
     _id:"map_cached", 
     value : 
-    function() { 
+    function(x) { 
         var id = {
-            time: this.t, 
+            time: x.t, 
             match: hash,
             step: step
         };
         id.time.setTime(id.time.getTime()-id.time.getTime()%step);
-        emit(id, this.d[field]);
+        emit(id, x.data[field]);
     }
 });
 
 f.push({
     _id:"count_map", 
     value : 
-    function() {        
-        time = this.time;
+    function(x) {        
+        var time = x.time;
         time.setTime(time.getTime()-time.getTime()%step);
-        emit(time, this.data);  
+        emit(time, 1);  
     }
 });
 
 f.push({
     _id:"count_map_cached", 
     value : 
-    function() { 
+    function(x) { 
         var id = {
-            time: this.t, 
+            time: x.t, 
             match: hash,
             step: step
         };
@@ -52,7 +51,7 @@ f.push({
 f.push({
     _id:"count_reduce", 
     value : 
-    function count_reduce(id, values) { 
+    function(id, values) { 
         return values.length; 
     }
 });
@@ -60,8 +59,12 @@ f.push({
 f.push( {
     _id:"sum_reduce", 
     value : 
-    function(id, values) { 
-        return Array.sum(values); 
+    function( id, values) { 
+        var ret = 0;
+        for(i = 0; i<values.length; i++){
+            ret += values[i];
+        }
+        return ret; 
     }
 });
 
@@ -69,7 +72,11 @@ f.push({
     _id:"avg_reduce", 
     value : 
     function(id, values) { 
-        return Array.avg(values); 
+        var ret = 0;
+        for(i = 0; i<values.length; i++){
+            ret += values[i];
+        }
+        return ret/values.length; 
     }
 });
 
@@ -93,7 +100,9 @@ f.push({
     _id:"median_reduce", 
     value : 
     function(id, values) { 
-        return (values.length%2!=0)?values[(1+values.length)/2-1]:(values[values.length/2-1]+values[values.length/2])/2;
+        x= (values.length%2!=0)?values[(1+values.length)/2-1]:(values[values.length/2-1]+values[values.length/2])/2;
+        print(x);
+        return x;
     }
 });
 db.system.js.remove();

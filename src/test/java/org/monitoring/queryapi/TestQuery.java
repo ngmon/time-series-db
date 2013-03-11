@@ -12,6 +12,7 @@ import org.junit.AfterClass;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 /**
  *
  * @author Michal
@@ -22,13 +23,13 @@ public class TestQuery {
     static List<Document> list = new ArrayList<Document>();
     static Morphia morphia = new Morphia();
     static DBCollection col;
-    
-    final static int NUM = 1;
+    final static int NUM = 11;
 
-    @BeforeClass    
+    @BeforeClass
     public static void setUp() {
         m.setCollection("querytest");
         col = m.getCollection();
+        col.drop();
         morphia.map(Document.class);
         Datastore ds = morphia.createDatastore(m.getDb().getMongo(), m.getDb().toString());
 
@@ -37,7 +38,7 @@ public class TestQuery {
             Calendar cal = new GregorianCalendar(2013, 1, 13, 16, 0, i);
             DocumentData docData = new DocumentData();
             docData.setValue(i);
-            doc.setTime( cal.getTime());
+            doc.setTime(cal.getTime());
             doc.setData(docData);
             ds.save(doc);
             list.add(doc);
@@ -63,7 +64,7 @@ public class TestQuery {
     public void distinct() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        for (int ob : (Iterable<Integer>) q.distinct("v").get("result")) {
+        for (int ob : (Iterable<Integer>) q.distinct("value").get("result")) {
             assertEquals("distinct - different values", list.get(i).getData().getValue(), ob);
             i++;
         }
@@ -80,51 +81,48 @@ public class TestQuery {
     public void count() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        for(DBObject ob : (Iterable<DBObject>) q.setStep(100000).count().get("result")){
-            assertEquals( new Double(NUM), (Double) ob.get("value"));
-            i++;            
-        }
+        DBObject res = (DBObject) q.setStep(100000).count().get("result");
+        assertNotEquals("Empty result", 0, res.toMap().size());
+        DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
+        assertEquals(new Double(NUM), (Double) ob.get("value"));
     }
-    
+
     @Test
     public void avg() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        for(DBObject ob : (Iterable<DBObject>) q.setStep(1).orderAsc("_id").avg("v").get("result")){
-            assertEquals(list.get(i).getData().getValue(), ob.get("value"));
-            i++;
-        }
+        DBObject res = (DBObject) q.setStep(100000).orderAsc("_id").avg("value").get("result");
+        assertNotEquals("Empty result", 0, res.toMap().size());
+        DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
+        assertEquals(new Double(NUM / 2), ob.get("value"));
     }
-    
+
     @Test
     public void min() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        for(DBObject ob : (Iterable<DBObject>) q.setStep(100000).avg("v").get("result")){
-            assertEquals(new Integer(0), ob.get("value"));
-            i++;
-        }
+        DBObject res = (DBObject) q.setStep(100000).min("value").get("result");
+        DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
+        assertEquals(new Double(0), ob.get("value"));
     }
-    
+
     @Test
     public void max() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        for(DBObject ob : (Iterable<DBObject>) q.setStep(100000).avg("v").get("result")){
-            assertEquals(new Integer(NUM-1), ob.get("value"));
-            i++;
-        }
+        DBObject res = (DBObject) q.setStep(100000).max("value").get("result");
+        DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
+        assertEquals(new Double(NUM - 1), ob.get("value"));
+
     }
-    
+
     @Test
     public void median() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        DBObject res = (DBObject) q.setStep(100000).avg("v").get("result");
-        assertNotEquals("Empty result",0, res.toMap().size());
-        for(DBObject ob : (Iterable<DBObject>) res){
-            assertEquals(new Integer(NUM/2), ob.get("value"));
-            i++;
-        }
+        DBObject res = (DBObject) q.setStep(100000).median("value").get("result");
+        assertNotEquals("Empty result", 0, res.toMap().size());
+        DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
+        assertEquals(new Double(NUM / 2), ob.get("value"));
     }
 }

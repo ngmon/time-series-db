@@ -9,10 +9,13 @@ import com.mongodb.DBObject;
 import com.mongodb.MapReduceCommand;
 import com.mongodb.MapReduceOutput;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 /**
  * Class for composing complex queries.
@@ -515,6 +518,14 @@ public class Query {
      * @return map reduce result
      */
     private DBObject cache(CacheMatcher cm, String map, String reduce, String finalize, Map<String, Object> scope) {
+        if(start == null){
+            Calendar cal = new GregorianCalendar(1970, 0, 0);
+            start = cal.getTime();
+        }
+        if(end == null){
+            Calendar cal = new GregorianCalendar(2020, 0, 0);
+            end = cal.getTime();
+        }
         final CachePoint CACHE_POINT_START = new CachePoint(start, cm.getOperation(), cm.getField(), query.get().toString(), CachePoint.Flag.START, step);
         final CachePoint CACHE_POINT_END = new CachePoint(end, cm.getOperation(), cm.getField(), query.get().toString(), CachePoint.Flag.END, step);
 

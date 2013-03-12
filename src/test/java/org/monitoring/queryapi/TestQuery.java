@@ -7,6 +7,7 @@ import com.mongodb.DBObject;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.Iterator;
 import java.util.List;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
@@ -33,7 +34,7 @@ public class TestQuery {
         morphia.map(Document.class);
         Datastore ds = morphia.createDatastore(m.getDb().getMongo(), m.getDb().toString());
 
-        for (int i = 0; i < NUM; i++) {
+        for (int i = 1; i <= NUM; i++) {
             Document doc = new Document();
             Calendar cal = new GregorianCalendar(2013, 1, 13, 16, 0, i);
             DocumentData docData = new DocumentData();
@@ -91,10 +92,26 @@ public class TestQuery {
     public void avg() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        DBObject res = (DBObject) q.setStep(100000).orderAsc("_id").avg("value").get("result");
+        DBObject res = (DBObject) q.setStep(10000).orderAsc("_id").avg("value").get("result");
         assertNotEquals("Empty result", 0, res.toMap().size());
-        DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
-        assertEquals(new Double(NUM / 2), ob.get("value"));
+        Iterator it = ((Iterable<DBObject>) res).iterator();
+        DBObject ob = (DBObject)  it.next();
+        assertEquals("1. batch", new Double(NUM / 2), ob.get("value"));
+        ob = (DBObject) it.next();
+        assertEquals("2. batch",new Double(NUM - 10) / 2 + 10, ob.get("value"));
+    }
+    
+    @Test
+    public void avgCached() {
+        Query q = m.createQueryOnCollection("querytest");
+        int i = 0;
+        List res = (List) q.setStep(10000).avgCached("value").get("result");
+        assertNotEquals("Empty result", 0, res.size());
+        Iterator it = ((Iterable<DBObject>) res).iterator();
+        DBObject ob = (DBObject)  it.next();
+        assertEquals("1. batch", new Double(NUM / 2), ob.get("value"));
+        ob = (DBObject) it.next();
+        assertEquals("2. batch",new Double(NUM - 10) / 2 + 10, ob.get("value"));
     }
 
     @Test
@@ -103,7 +120,7 @@ public class TestQuery {
         int i = 0;
         DBObject res = (DBObject) q.setStep(100000).min("value").get("result");
         DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
-        assertEquals(new Double(0), ob.get("value"));
+        assertEquals(new Double(1), ob.get("value"));
     }
 
     @Test
@@ -112,7 +129,7 @@ public class TestQuery {
         int i = 0;
         DBObject res = (DBObject) q.setStep(100000).max("value").get("result");
         DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
-        assertEquals(new Double(NUM - 1), ob.get("value"));
+        assertEquals(new Double(NUM), ob.get("value"));
 
     }
 
@@ -123,6 +140,6 @@ public class TestQuery {
         DBObject res = (DBObject) q.setStep(100000).median("value").get("result");
         assertNotEquals("Empty result", 0, res.toMap().size());
         DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
-        assertEquals(new Double(NUM / 2), ob.get("value"));
+        assertEquals(new Double((NUM+1) / 2), ob.get("value"));
     }
 }

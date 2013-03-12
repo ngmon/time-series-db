@@ -3,6 +3,7 @@ package org.monitoring.queryapi;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
+import com.mongodb.MongoException;
 import com.mongodb.MongoOptions;
 import java.io.File;
 import java.io.FileInputStream;
@@ -67,9 +68,10 @@ public class Manager {
             m = new Mongo(host + ":" + port, options);
             db = m.getDB(dbName);
             db.collectionExists("test");
-        } catch (UnknownHostException ex) {
+        } catch (MongoException ex) {
             //log.log(Level.FATAL, "Unknown host Mongo DB", ex);
             ex.printStackTrace();
+            throw new RuntimeException("Can not connect Mongo server");
         } catch (Exception ex) {
             //log.log(Level.FATAL, "Could not connect Mongo DB", ex);
             ex.printStackTrace();

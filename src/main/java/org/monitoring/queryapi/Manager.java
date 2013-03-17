@@ -1,13 +1,17 @@
 package org.monitoring.queryapi;
 
+import com.mongodb.CommandResult;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
 import com.mongodb.MongoException;
 import com.mongodb.MongoOptions;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.UnknownHostException;
 import java.util.Properties;
 import org.apache.log4j.Logger;
@@ -68,13 +72,15 @@ public class Manager {
             m = new Mongo(host + ":" + port, options);
             db = m.getDB(dbName);
             db.collectionExists("test");
-        } catch (MongoException ex) {
-            //log.log(Level.FATAL, "Unknown host Mongo DB", ex);
-            ex.printStackTrace();
+        } catch (UnknownHostException ex) {
+             System.err.println("Connection failed: " + ex);
+            throw new RuntimeException("Can not connect Mongo server");
+        } catch (NullPointerException ex) {
+            
             throw new RuntimeException("Can not connect Mongo server");
         } catch (Exception ex) {
-            //log.log(Level.FATAL, "Could not connect Mongo DB", ex);
-            ex.printStackTrace();
+            
+            throw new RuntimeException("Can not connect Mongo server");
         }
     }
 
@@ -150,4 +156,42 @@ public class Manager {
         col = db.getCollection(collectionName);        
         return this;
     }
+
+    /**
+     * Read JS function from file on specified path and execute it on serverside of Mongo
+     */
+    public void executeJSFromFile(String path) {
+        StringBuilder sb = new StringBuilder();
+        InputStream is = null;
+        try {
+            File f = new File(path);
+            is = new FileInputStream(f);
+        } catch (IOException ex) {
+            System.err.println("no file");
+        }
+        if (is == null) {
+            is = Manager.class.getResourceAsStream(path);
+        }
+        InputStreamReader irs = new InputStreamReader(is);
+        BufferedReader br = new BufferedReader(irs);
+        String line;
+        try {
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+        } catch (IOException ex) {
+            System.err.println("no file");
+        }
+        executeJS(sb.toString());
+    }
+    
+    /**
+     * Execute JS function on serverside of Mongo
+     * @param cmd one JS function
+     */
+    public void executeJS(String cmd){
+        db.doEval(cmd);
+    }
+    
+
 }

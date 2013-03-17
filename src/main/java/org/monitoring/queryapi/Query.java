@@ -523,7 +523,7 @@ public class Query {
             start = cal.getTime();
         }
         if(end == null){
-            Calendar cal = new GregorianCalendar(2020, 0, 0);
+            Calendar cal = new GregorianCalendar(2050, 0, 0);
             end = cal.getTime();
         }
         final CachePoint CACHE_POINT_START = new CachePoint(start, cm.getOperation(), cm.getField(), query.get().toString(), CachePoint.Flag.START, step);

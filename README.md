@@ -24,6 +24,7 @@ Query __metrics__ counted from events (*with variable time step defined):
 * min*
 * avg*
 * distinct
+* reasonFor
 
 _______
 Internal storage
@@ -31,7 +32,6 @@ Internal storage
 {
   _id:id              //generated
   t:time,             //stored as ISO Date
-  s:source,           //type,source of data
   d:  {               //event data
       value1:{...},
       value2:{...}

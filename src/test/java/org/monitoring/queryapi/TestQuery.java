@@ -24,17 +24,20 @@ public class TestQuery {
     static List<Document> list = new ArrayList<Document>();
     static Morphia morphia = new Morphia();
     static DBCollection col;
-    final static int NUM = 11;
+    final static int NUM = 20;
+
+    
 
     @BeforeClass
     public static void setUp() {
         m.setCollection("querytest");
         col = m.getCollection();
+        m.executeJSFromFile("src/main/resources/store_functions.js");
         col.drop();
         morphia.map(Document.class);
         Datastore ds = morphia.createDatastore(m.getDb().getMongo(), m.getDb().toString());
 
-        for (int i = 1; i <= NUM; i++) {
+        for (int i = 0; i < NUM; i++) {
             Document doc = new Document();
             Calendar cal = new GregorianCalendar(2013, 1, 13, 16, 0, i);
             DocumentData docData = new DocumentData();
@@ -82,10 +85,13 @@ public class TestQuery {
     public void count() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        DBObject res = (DBObject) q.setStep(100000).count().get("result");
+        DBObject res = (DBObject) q.setStep(10000).count().get("result");
         assertNotEquals("Empty result", 0, res.toMap().size());
-        DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
-        assertEquals(new Double(NUM), (Double) ob.get("value"));
+        Iterator it = ((Iterable<DBObject>) res).iterator();
+        DBObject ob = (DBObject) it.next();
+        assertEquals("1. batch", new Double(NUM / 2), ob.get("value"));
+        ob = (DBObject) it.next();
+        assertEquals("2. batch", new Double(NUM / 2), ob.get("value"));
     }
 
     @Test
@@ -95,12 +101,49 @@ public class TestQuery {
         DBObject res = (DBObject) q.setStep(10000).orderAsc("_id").avg("value").get("result");
         assertNotEquals("Empty result", 0, res.toMap().size());
         Iterator it = ((Iterable<DBObject>) res).iterator();
-        DBObject ob = (DBObject)  it.next();
-        assertEquals("1. batch", new Double(NUM / 2), ob.get("value"));
+        DBObject ob = (DBObject) it.next();
+        assertEquals("1. batch", new Double(4.5), ob.get("value"));
         ob = (DBObject) it.next();
-        assertEquals("2. batch",new Double(NUM - 10) / 2 + 10, ob.get("value"));
+        assertEquals("2. batch", new Double(14.5), ob.get("value"));
     }
-    
+
+    @Test
+    public void min() {
+        Query q = m.createQueryOnCollection("querytest");
+        int i = 0;
+        DBObject res = (DBObject) q.setStep(10000).min("value").get("result");
+        Iterator it = ((Iterable<DBObject>) res).iterator();
+        DBObject ob = (DBObject) it.next();
+        assertEquals("1. batch", new Double(0), ob.get("value"));
+        ob = (DBObject) it.next();
+        assertEquals("2. batch", new Double(10), ob.get("value"));
+    }
+
+    @Test
+    public void max() {
+        Query q = m.createQueryOnCollection("querytest");
+        int i = 0;
+        DBObject res = (DBObject) q.setStep(10000).max("value").get("result");
+        Iterator it = ((Iterable<DBObject>) res).iterator();
+        DBObject ob = (DBObject) it.next();
+        assertEquals("1. batch", new Double(9), ob.get("value"));
+        ob = (DBObject) it.next();
+        assertEquals("2. batch", new Double(19), ob.get("value"));
+    }
+
+    @Test
+    public void median() {
+        Query q = m.createQueryOnCollection("querytest");
+        int i = 0;
+        DBObject res = (DBObject) q.setStep(10000).median("value").get("result");
+        assertNotEquals("Empty result", 0, res.toMap().size());
+        Iterator it = ((Iterable<DBObject>) res).iterator();
+        DBObject ob = (DBObject) it.next();
+        assertEquals("1. batch", new Double(4.5), ob.get("value"));
+        ob = (DBObject) it.next();
+        assertEquals("2. batch", new Double(14.5), ob.get("value"));
+    }
+
     @Test
     public void avgCached() {
         Query q = m.createQueryOnCollection("querytest");
@@ -108,38 +151,61 @@ public class TestQuery {
         List res = (List) q.setStep(10000).avgCached("value").get("result");
         assertNotEquals("Empty result", 0, res.size());
         Iterator it = ((Iterable<DBObject>) res).iterator();
-        DBObject ob = (DBObject)  it.next();
+        DBObject ob = (DBObject) it.next();
+        assertEquals("1. batch", new Double(4.5), ob.get("value"));
+        ob = (DBObject) it.next();
+        assertEquals("2. batch", new Double(14.5), ob.get("value"));
+    }
+
+    @Test
+    public void countCached() {
+        Query q = m.createQueryOnCollection("querytest");
+        int i = 0;
+        List res = (List) q.setStep(10000).countCached().get("result");
+        assertNotEquals("Empty result", 0, res.size());
+        Iterator it = ((Iterable<DBObject>) res).iterator();
+        DBObject ob = (DBObject) it.next();
         assertEquals("1. batch", new Double(NUM / 2), ob.get("value"));
         ob = (DBObject) it.next();
-        assertEquals("2. batch",new Double(NUM - 10) / 2 + 10, ob.get("value"));
+        assertEquals("2. batch", new Double(NUM / 2), ob.get("value"));
     }
 
     @Test
-    public void min() {
+    public void minCached() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        DBObject res = (DBObject) q.setStep(100000).min("value").get("result");
-        DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
-        assertEquals(new Double(1), ob.get("value"));
+        List res = (List) q.setStep(10000).minCached("value").get("result");
+        Iterator it = ((Iterable<DBObject>) res).iterator();
+        DBObject ob = (DBObject) it.next();
+        assertEquals("1. batch", new Double(0), ob.get("value"));
+        ob = (DBObject) it.next();
+        assertEquals("2. batch", new Double(10), ob.get("value"));
     }
 
     @Test
-    public void max() {
+    public void maxCached() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        DBObject res = (DBObject) q.setStep(100000).max("value").get("result");
-        DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
-        assertEquals(new Double(NUM), ob.get("value"));
-
+        List res = (List) q.setStep(10000).maxCached("value").get("result");
+        Iterator it = ((Iterable<DBObject>) res).iterator();
+        DBObject ob = (DBObject) it.next();
+        assertEquals("1. batch", new Double(9), ob.get("value"));
+        ob = (DBObject) it.next();
+        assertEquals("2. batch", new Double(19), ob.get("value"));
     }
 
     @Test
-    public void median() {
+    public void medianCached() {
         Query q = m.createQueryOnCollection("querytest");
         int i = 0;
-        DBObject res = (DBObject) q.setStep(100000).median("value").get("result");
-        assertNotEquals("Empty result", 0, res.toMap().size());
-        DBObject ob = (DBObject) ((Iterable<DBObject>) res).iterator().next();
-        assertEquals(new Double((NUM+1) / 2), ob.get("value"));
+        List res = (List) q.setStep(10000).medianCached("value").get("result");
+        assertNotEquals("Empty result", 0, res.size());
+        Iterator it = ((Iterable<DBObject>) res).iterator();
+        DBObject ob = (DBObject) it.next();
+        assertEquals("1. batch", new Double(4.5), ob.get("value"));
+        ob = (DBObject) it.next();
+        assertEquals("2. batch", new Double(14.5), ob.get("value"));
     }
+    
+    
 }

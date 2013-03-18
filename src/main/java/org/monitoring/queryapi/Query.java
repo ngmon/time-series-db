@@ -15,7 +15,6 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 
 /**
  * Class for composing complex queries.
@@ -391,7 +390,7 @@ public class Query {
                     .append(Aggregation.MATCH, new BasicDBObject(Aggregation.OR, dates)).get();
 
             for (String groupKey : groupBy) {
-                builder.append(groupKey, "$" + groupKey);
+                builder.append(groupKey.substring(groupKey.lastIndexOf(".")+1, groupKey.length()), "$" + groupKey);
             }
 
             DBObject groupInner = builder.get();

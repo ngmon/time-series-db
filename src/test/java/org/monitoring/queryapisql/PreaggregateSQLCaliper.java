@@ -23,7 +23,7 @@ public class PreaggregateSQLCaliper extends SimpleBenchmark {
     int from, to;
     TimeUnit unit = TimeUnit.MINUTES;
     
-    int[][] times = {{60, 1440},{1440, 43200,3,3},{1440,43200},{43200,525600}};
+    int[][] times = {{60, 1440},{1440, 43200,3,3},{43200,525600}};
     
     Preaggregate preaggregateSQL = new PreaggregateSQL();
 
@@ -33,6 +33,9 @@ public class PreaggregateSQLCaliper extends SimpleBenchmark {
         postgre.dropTable();
         String[] fields = {"avg", "count", "sum"};
         postgre.createTable("aggregate60", 60, 1440, fields);
+        postgre.createTable("aggregate1440", 1440, 43200, fields);
+        postgre.createTable("aggregate43200", 43200, 525600, fields);
+        postgre.createEventTable();
         Calendar cal = new GregorianCalendar(2013, 1, 1, 1, 0, 0);
         cal.set(Calendar.MILLISECOND, 0);
         from = 0;
@@ -59,6 +62,7 @@ public class PreaggregateSQLCaliper extends SimpleBenchmark {
 
     public static void main(String[] args) throws Exception {
         Locale.setDefault(Locale.US);
-        Runner.main(PreaggregateSQLCaliper.class, args);
+        String[] argx = {"--debug"};
+        Runner.main(PreaggregateSQLCaliper.class, argx);
     }
 }

@@ -30,6 +30,7 @@ public class PreaggregateSQLTest {
         postgre.createTable("aggregate60", 60, 1440, fields);
         postgre.createTable("aggregate1440", 1440, 43200, fields);
         postgre.createTable("aggregate43200", 43200, 525600, fields);
+        postgre.createEventTable();
         Calendar cal = new GregorianCalendar(2013, 1, 2, 15, 0, 0);        
         cal.set(Calendar.MILLISECOND, 0);
         for (int i = 0; i < 100; i++) {

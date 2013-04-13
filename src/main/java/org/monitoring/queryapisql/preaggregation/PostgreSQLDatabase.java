@@ -134,7 +134,7 @@ public class PostgreSQLDatabase {
                 builder.append(field).append(j).append(" DOUBLE precision DEFAULT 0,");
             }
         }
-        builder.append(" CONSTRAINT pk_agg60_id PRIMARY KEY (id) ");
+        builder.append(" CONSTRAINT pk_agg"+timeActual+"_id PRIMARY KEY (id) ");
         builder.append(")");
         execute(builder.toString());
         

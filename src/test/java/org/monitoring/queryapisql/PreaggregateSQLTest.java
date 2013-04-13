@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.monitoring.queryapi.Event;
-import org.monitoring.queryapi.Manager;
 import org.monitoring.queryapisql.preaggregation.PostgreSQLDatabase;
 
 
@@ -29,6 +28,8 @@ public class PreaggregateSQLTest {
         postgre.dropTable();        
         String[] fields = {"avg", "count", "sum"};
         postgre.createTable("aggregate60", 60, 1440, fields);
+        postgre.createTable("aggregate1440", 1440, 43200, fields);
+        postgre.createTable("aggregate43200", 43200, 525600, fields);
         Calendar cal = new GregorianCalendar(2013, 1, 2, 15, 0, 0);        
         cal.set(Calendar.MILLISECOND, 0);
         for (int i = 0; i < 100; i++) {
@@ -46,7 +47,7 @@ public class PreaggregateSQLTest {
     public void saveEvent() {
         PreaggregateSQL preaggregate = new PreaggregateSQL();
         for(Event event : list){
-            int[][] times = {{60, 1440,0,0}/*,{1440, 2880,0,0},{2880, 2880,0,0}*/};
+            int[][] times = {{60, 1440,0,0},{1440, 43200,0,0},{43200, 525600,0,0}};
             preaggregate.saveEvent(TimeUnit.MINUTES, times, event);
         }
         /*

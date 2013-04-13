@@ -78,18 +78,19 @@ public class PostgreSQLDatabase {
     public List<Event> updateAggregate(int timeActual, int timeNext, Date date, String field, Event event) {
         try {
             String query = "WITH upsert AS"
-                    + "(UPDATE aggregate" + timeActual + " SET sum" + field + " = sum" + field + " + ?, count" + field + " = count" + field + " + 1, avg" + field + " = sum"+field+" / (1+count"+field+") "
+                    + "(UPDATE aggregate" + timeActual + " SET sum" + field + " = sum" + field + " + ?, count" + field + " = count" + field + " + 1, avg" + field + " = (sum"+field+" + ?) / (1+count"+field+") "
                     + "WHERE date = ? returning id) "
                     + "INSERT INTO aggregate" + timeActual + " (sum" + field + ", avg" + field + ",count" + field + ", date, source) "
                     + "SELECT ?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM upsert) ; ";
             PreparedStatement st = conn.prepareStatement(query);
             st.setDouble(1, event.getValue());
-            st.setTimestamp(2, new java.sql.Timestamp(date.getTime()));
-            st.setDouble(3, event.getValue());
+            st.setDouble(2, event.getValue());
+            st.setTimestamp(3, new java.sql.Timestamp(date.getTime()));
             st.setDouble(4, event.getValue());
-            st.setDouble(5, 1D);
-            st.setTimestamp(6, new java.sql.Timestamp(date.getTime()));
-            st.setString(7, event.getSource());
+            st.setDouble(5, event.getValue());
+            st.setDouble(6, 1D);
+            st.setTimestamp(7, new java.sql.Timestamp(date.getTime()));
+            st.setString(8, event.getSource());
             String q = st.toString();
             int result = st.executeUpdate();
         } catch (SQLException ex) {

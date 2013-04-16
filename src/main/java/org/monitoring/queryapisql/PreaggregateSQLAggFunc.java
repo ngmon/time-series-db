@@ -9,14 +9,14 @@ import org.monitoring.queryapisql.preaggregation.PostgreSQLDatabase;
  *
  * @author Michal Dubravcik
  */
-public class PreaggregateSQL implements Preaggregate{
+public class PreaggregateSQLAggFunc implements Preaggregate{
     String colName = "aggregate";
     PostgreSQLDatabase postgre = new PostgreSQLDatabase();
 
-    public PreaggregateSQL() {
+    public PreaggregateSQLAggFunc() {
     }
     
-    public PreaggregateSQL(String colName) {
+    public PreaggregateSQLAggFunc(String colName) {
         this.colName = colName;
     }
     
@@ -39,17 +39,22 @@ public class PreaggregateSQL implements Preaggregate{
             i++;
 
             String table = colName + timeActual;
-            
             for (int k = -rangeLeft; k <= rangeRight; k++) {
-                long difference = unit.toMillis(timeActual * k);
-                long eventDateLocal = event.getDate().getTime() + difference;
+                Date start = new Date(event.getDate().getTime()
+                        - event.getDate().getTime() % unit.toMillis(timeActual)
+                        + unit.toMillis(timeActual * (k - rangeLeft)));
+                Date middle = new Date(start.getTime()
+                        + unit.toMillis(timeActual * (rangeLeft)));
+                Date end = new Date(middle.getTime()
+                        + unit.toMillis(timeActual * (rangeRight + 1)));
+                
 
-                long eventDate = eventDateLocal - eventDateLocal % unit.toMillis(timeNext);
+                long eventDate =  middle.getTime() - middle.getTime() % unit.toMillis(timeNext);
 
-                fieldTime = eventDateLocal % unit.toMillis(timeNext) / unit.toMillis(timeActual);
+                fieldTime = eventDate % unit.toMillis(timeNext) / unit.toMillis(timeActual);
                 String fieldTimeString = fieldTime.toString();
 
-                postgre.updateAggregate(table, new Date(eventDate), fieldTimeString, event);
+                postgre.updateAggregateWithAggFunc(table, start, end, middle, fieldTimeString, event);
             }
         }
     }

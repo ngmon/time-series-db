@@ -74,13 +74,26 @@ public class PostgreSQLDatabase {
         }
         return null;
     }
+    public void updateAggregateWithAggFunc(String table, Date start,Date end,Date middle,String fieldTimeString, Event event) {
+        try {
+            String query = "select upsert('"+table+"',?,'"+fieldTimeString+"',?,?)";
+        
+        PreparedStatement st = conn.prepareStatement(query);
+            st.setTimestamp(1, new java.sql.Timestamp(middle.getTime()));
+            st.setTimestamp(2, new java.sql.Timestamp(start.getTime()));
+            st.setTimestamp(3, new java.sql.Timestamp(end.getTime()));
+            int result = st.executeUpdate();
+        }catch (SQLException ex) {
+            ex.printStackTrace();
+        }        
+    }
 
-    public List<Event> updateAggregate(int timeActual, int timeNext, Date date, String field, Event event) {
+    public void updateAggregate(String table, Date date, String field, Event event) {
         try {
             String query = "WITH upsert AS"
-                    + "(UPDATE aggregate" + timeActual + " SET sum" + field + " = sum" + field + " + ?, count" + field + " = count" + field + " + 1, avg" + field + " = (sum"+field+" + ?) / (1+count"+field+") "
+                    + "(UPDATE " + table + " SET sum" + field + " = sum" + field + " + ?, count" + field + " = count" + field + " + 1, avg" + field + " = (sum"+field+" + ?) / (1+count"+field+") "
                     + "WHERE date = ? returning id) "
-                    + "INSERT INTO aggregate" + timeActual + " (sum" + field + ", avg" + field + ",count" + field + ", date, source) "
+                    + "INSERT INTO " + table  + " (sum" + field + ", avg" + field + ",count" + field + ", date, source) "
                     + "SELECT ?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM upsert) ; ";
             PreparedStatement st = conn.prepareStatement(query);
             st.setDouble(1, event.getValue());
@@ -96,7 +109,6 @@ public class PostgreSQLDatabase {
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
-        return null;
     }
 
     public void execute(String query) {
@@ -145,4 +157,6 @@ public class PostgreSQLDatabase {
         execute("CREATE INDEX date_agg ON aggregate60 (date);");
         execute("CREATE INDEX date_event ON event (date);");
     }
+
+    
 }

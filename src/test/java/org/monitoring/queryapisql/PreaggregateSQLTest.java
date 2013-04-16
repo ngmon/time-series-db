@@ -4,6 +4,7 @@ package org.monitoring.queryapisql;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -33,11 +34,9 @@ public class PreaggregateSQLTest {
         postgre.createEventTable();
         Calendar cal = new GregorianCalendar(2013, 1, 2, 15, 0, 0);        
         cal.set(Calendar.MILLISECOND, 0);
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < 10; i++) {
             Event event = new Event();
-            cal.set(Calendar.SECOND, i%60);
-            cal.set(Calendar.MINUTE, i/60);
-            cal.set(Calendar.HOUR_OF_DAY, i/60 + 15);
+            cal.setTime(new Date(cal.getTime().getTime() + 1000*60*60*12)); 
             event.setDate(cal.getTime());
             event.setValue(10);
             list.add(event);

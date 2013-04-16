@@ -39,6 +39,7 @@ public class PreaggregateSQLCaliper extends SimpleBenchmark {
     
     
     Preaggregate preaggregateSQL = new PreaggregateSQL();
+    Preaggregate preaggregateSQLAggFunc = new PreaggregateSQLAggFunc();
 
     @Override
     protected void setUp() {
@@ -56,7 +57,7 @@ public class PreaggregateSQLCaliper extends SimpleBenchmark {
         for (int i = from; i < to; i++) {
             Event event = new Event();
             event.setDate(cal.getTime());            
-            cal.setTime(new Date(cal.getTime().getTime() + 1000 * 60 * 15));
+            cal.setTime(new Date(cal.getTime().getTime() + 1000 * 60 * 60 * 12));
             event.setValue(10);
             list.add(event);
         }
@@ -70,6 +71,12 @@ public class PreaggregateSQLCaliper extends SimpleBenchmark {
     public void timeSQLAggregate(int reps) {
         for (int i = 0; i < reps; i++) {
             preaggregateSQL.saveEvent(unit, time.a, list.get(i));
+        }
+    }
+    
+    public void timeSQLAggregateAggFunc(int reps) {
+        for (int i = 0; i < reps; i++) {
+            preaggregateSQLAggFunc.saveEvent(unit, time.a, list.get(i));
         }
     }
 

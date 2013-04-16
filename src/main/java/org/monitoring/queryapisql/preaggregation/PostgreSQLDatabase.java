@@ -82,30 +82,19 @@ public class PostgreSQLDatabase {
             st.setTimestamp(1, new java.sql.Timestamp(middle.getTime()));
             st.setTimestamp(2, new java.sql.Timestamp(start.getTime()));
             st.setTimestamp(3, new java.sql.Timestamp(end.getTime()));
-            int result = st.executeUpdate();
+            st.execute();
         }catch (SQLException ex) {
             ex.printStackTrace();
         }        
     }
 
-    public void updateAggregate(String table, Date date, String field, Event event) {
+    public void updateAggregate(String table, Date date, String fieldTimeString, Event event) {
         try {
-            String query = "WITH upsert AS"
-                    + "(UPDATE " + table + " SET sum" + field + " = sum" + field + " + ?, count" + field + " = count" + field + " + 1, avg" + field + " = (sum"+field+" + ?) / (1+count"+field+") "
-                    + "WHERE date = ? returning id) "
-                    + "INSERT INTO " + table  + " (sum" + field + ", avg" + field + ",count" + field + ", date, source) "
-                    + "SELECT ?,?,?,?,? WHERE NOT EXISTS (SELECT 1 FROM upsert) ; ";
+            String query = "select upsertclassic('"+table+"',?,'"+fieldTimeString+"',?)";
             PreparedStatement st = conn.prepareStatement(query);
-            st.setDouble(1, event.getValue());
+             st.setTimestamp(1, new java.sql.Timestamp(date.getTime()));
             st.setDouble(2, event.getValue());
-            st.setTimestamp(3, new java.sql.Timestamp(date.getTime()));
-            st.setDouble(4, event.getValue());
-            st.setDouble(5, event.getValue());
-            st.setDouble(6, 1D);
-            st.setTimestamp(7, new java.sql.Timestamp(date.getTime()));
-            st.setString(8, event.getSource());
-            String q = st.toString();
-            int result = st.executeUpdate();
+            st.execute();
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -125,6 +114,12 @@ public class PostgreSQLDatabase {
             String query = "DROP TABLE aggregate60;";
             PreparedStatement st = conn.prepareStatement(query);
             int result = st.executeUpdate();
+            query = "DROP TABLE aggregate1440";
+            st = conn.prepareStatement(query);
+            result = st.executeUpdate();
+            query = "DROP TABLE aggregate43200";
+            st = conn.prepareStatement(query);
+            result = st.executeUpdate();
             query = "DROP TABLE event";
             st = conn.prepareStatement(query);
             result = st.executeUpdate();

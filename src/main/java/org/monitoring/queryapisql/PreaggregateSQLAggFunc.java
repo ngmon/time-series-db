@@ -51,10 +51,10 @@ public class PreaggregateSQLAggFunc implements Preaggregate{
 
                 long eventDate =  middle.getTime() - middle.getTime() % unit.toMillis(timeNext);
 
-                fieldTime = eventDate % unit.toMillis(timeNext) / unit.toMillis(timeActual);
+                fieldTime = middle.getTime() % unit.toMillis(timeNext) / unit.toMillis(timeActual);
                 String fieldTimeString = fieldTime.toString();
 
-                postgre.updateAggregateWithAggFunc(table, start, end, middle, fieldTimeString, event);
+                postgre.updateAggregateWithAggFunc(table, start, end, new Date(eventDate), fieldTimeString, event);
             }
         }
     }

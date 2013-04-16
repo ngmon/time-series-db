@@ -157,10 +157,10 @@ public class PostgreSQLDatabase {
     public void createUpsertFunctions(){
         
         try {
-            String query = Manager.readFile("src/main/properties/upsert_agg_func.sql");
+            String query = Manager.readFile("src/main/resources/upsert_agg_func.sql");
             PreparedStatement st = conn.prepareStatement(query);
             st.execute();
-            query = Manager.readFile("src/main/properties/upsert_classic.sql");
+            query = Manager.readFile("src/main/resources/upsert_classic.sql");
             st = conn.prepareStatement(query);
             st.execute();
         } catch (SQLException ex) {

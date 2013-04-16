@@ -9,6 +9,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 import org.monitoring.queryapi.Event;
+import org.monitoring.queryapi.Manager;
 
 /**
  *
@@ -151,6 +152,20 @@ public class PostgreSQLDatabase {
         execute("CREATE TABLE event(id serial NOT NULL, source character(100),date timestamp without time zone, value integer, CONSTRAINT pk_id PRIMARY KEY (id))");
         execute("CREATE INDEX date_agg ON aggregate60 (date);");
         execute("CREATE INDEX date_event ON event (date);");
+    }
+    
+    public void createUpsertFunctions(){
+        
+        try {
+            String query = Manager.readFile("src/main/properties/upsert_agg_func.sql");
+            PreparedStatement st = conn.prepareStatement(query);
+            st.execute();
+            query = Manager.readFile("src/main/properties/upsert_classic.sql");
+            st = conn.prepareStatement(query);
+            st.execute();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
     }
 
     

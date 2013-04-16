@@ -66,6 +66,7 @@ public class PreaggregateCaliper extends SimpleBenchmark {
         postgre.createTable("aggregate1440", 1440, 43200, fields);
         postgre.createTable("aggregate43200", 43200, 525600, fields);
         postgre.createEventTable();
+        postgre.createUpsertFunctions();
         Calendar cal = new GregorianCalendar(2013, 1, 1, 1, 0, 0);
         cal.set(Calendar.MILLISECOND, 0);
         from = 0;

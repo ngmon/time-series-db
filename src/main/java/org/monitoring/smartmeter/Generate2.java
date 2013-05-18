@@ -11,7 +11,7 @@ import org.monitoring.smartmeter.model.MeterEvent;
  *
  * @author Michal
  */
-public class Run {
+public class Generate2 {
 
     static Database postgre = new PostgreSQLDatabase();
     static Database mongo = new MongoDatabase("postgres", "meterevent");

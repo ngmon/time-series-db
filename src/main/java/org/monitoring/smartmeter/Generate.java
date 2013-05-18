@@ -22,7 +22,7 @@ public class Generate {
     public static void main(String[] args) {
         Date start = new Date();
         Date stop;
-        for (int i = 116186; i < 1000000; i++) {
+        for (int i = 1; i < 1e6; i++) {
             Date date = new Date();
 
             MeterEvent event = new MeterEvent();

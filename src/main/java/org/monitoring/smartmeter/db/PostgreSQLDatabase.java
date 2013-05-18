@@ -30,6 +30,20 @@ public class PostgreSQLDatabase implements Database {
             ex.printStackTrace();
         }
     }
+    
+    public void create(){
+        try {
+            String query = "CREATE TABLE meterevent (  id integer NOT NULL,"
+                    + " edate timestamp without time zone,   esource character varying(25),"
+                    + "  evalue double precision,  CONSTRAINT primary_key PRIMARY KEY (id) );"
+                    + " ALTER TABLE meterevent   OWNER TO postgres; CREATE INDEX meterevent_edate_idx"
+                    + "  ON meterevent  USING btree  (edate);";
+            PreparedStatement st = conn.prepareStatement(query);
+            ResultSet result = st.executeQuery();
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
+    }
 
     public List<MeterEvent> getAllEvents() {
         try {

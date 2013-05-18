@@ -1,4 +1,4 @@
-package org.monitoring.queryapisql.preaggregation;
+package org.monitoring.queryapi.sql;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

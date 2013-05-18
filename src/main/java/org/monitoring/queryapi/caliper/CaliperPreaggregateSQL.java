@@ -1,4 +1,4 @@
-package org.monitoring.queryapisql;
+package org.monitoring.queryapi.caliper;
 
 import com.google.caliper.Param;
 import com.google.caliper.Runner;
@@ -12,15 +12,17 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import org.monitoring.queryapi.Event;
 import org.monitoring.queryapi.preaggregation.Preaggregate;
-import org.monitoring.queryapisql.PreaggregateSQL;
-import org.monitoring.queryapisql.preaggregation.PostgreSQLDatabase;
+import org.monitoring.queryapi.PreaggregateSQL;
+import org.monitoring.queryapi.PreaggregateSQL;
+import org.monitoring.queryapi.PreaggregateSQLAggFunc;
+import org.monitoring.queryapi.sql.PostgreSQLDatabase;
 
 /**
  *
  * @author Michal Dubravcik
  */
 
-public class PreaggregateSQLCaliper extends SimpleBenchmark {
+public class CaliperPreaggregateSQL extends SimpleBenchmark {
 
     List<Event> list = new ArrayList<Event>();
     int from, to;
@@ -83,6 +85,6 @@ public class PreaggregateSQLCaliper extends SimpleBenchmark {
 
     public static void main(String[] args) throws Exception {
         Locale.setDefault(Locale.US);
-        Runner.main(PreaggregateSQLCaliper.class, args);
+        Runner.main(CaliperPreaggregateSQL.class, args);
     }
 }

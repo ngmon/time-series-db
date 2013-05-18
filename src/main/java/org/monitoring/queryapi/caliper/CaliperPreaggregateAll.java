@@ -1,4 +1,4 @@
-package org.monitoring.queryapisql;
+package org.monitoring.queryapi.caliper;
 
 import com.google.caliper.Param;
 import com.google.caliper.Runner;
@@ -20,14 +20,16 @@ import org.monitoring.queryapi.preaggregation.PreaggregateMongo;
 import org.monitoring.queryapi.preaggregation.PreaggregateMongoMR;
 import org.monitoring.queryapi.preaggregation.compute.Compute;
 import org.monitoring.queryapi.preaggregation.compute.ComputeAvg;
-import org.monitoring.queryapisql.PreaggregateSQL;
-import org.monitoring.queryapisql.preaggregation.PostgreSQLDatabase;
+import org.monitoring.queryapi.PreaggregateSQL;
+import org.monitoring.queryapi.PreaggregateSQL;
+import org.monitoring.queryapi.preaggregation.PreaggregateMongoMRI;
+import org.monitoring.queryapi.sql.PostgreSQLDatabase;
 
 /**
  *
  * @author Michal Dubravcik
  */
-public class PreaggregateCaliper extends SimpleBenchmark {
+public class CaliperPreaggregateAll extends SimpleBenchmark {
 
     static Manager m = new Manager();
     static List<Event> list = new ArrayList<Event>();
@@ -39,10 +41,10 @@ public class PreaggregateCaliper extends SimpleBenchmark {
     
     @Param TimeArray time;
     enum TimeArray{
-        Hourly(new int[][] {{60, 1440}}),
-        HourlyDaily(new int[][] {{60, 1440},{1440, 43200}}),
-        HourlyWeeklyP(new int[][] {{60, 1440},{1440, 43200,3,3}}),
-        HourlyWeeklyPMonthly(new int[][] {{60, 1440},{1440, 43200,3,3},{43200,525600}});
+        Hourly(new int[][] {{60, 24}}),
+        HourlyDaily(new int[][] {{60, 24},{1440, 30}}),
+        HourlyWeeklyP(new int[][] {{60, 24},{1440, 30,3,3}}),
+        HourlyWeeklyPMonthly(new int[][] {{60, 24},{1440, 30,3,3},{43200,12}});
         final int[][] a;
         TimeArray(int[][] a){
             this.a = a;
@@ -50,15 +52,15 @@ public class PreaggregateCaliper extends SimpleBenchmark {
     }
     
     Preaggregate preaggregate = new PreaggregateMongo(col);
-    Preaggregate preaggregateMR = new PreaggregateMongoMR(col);
+    Preaggregate preaggregateMRI = new PreaggregateMongoMRI(col);
     Preaggregate preaggregateSQL = new PreaggregateSQL();
 
     @Override
     protected void setUp() {
         col = m.getDb().getCollection("aggregate");
         m.getDb().dropDatabase();
-        col.createIndex(new BasicDBObject("date", 1));
         m.executeJSSaveFromDefaultFile();
+        col.createIndex(new BasicDBObject("date", 1));
         PostgreSQLDatabase postgre = new PostgreSQLDatabase();
         postgre.dropTable();
         String[] fields = {"avg", "count", "sum"};
@@ -93,9 +95,11 @@ public class PreaggregateCaliper extends SimpleBenchmark {
 
     public void timeMapReduceAggregate(int reps) {
         for (int i = 0; i < reps; i++) {
-            preaggregateMR.saveEvent(unit, time.a, list.get(i));
+            preaggregateMRI.saveEvent(unit, time.a, list.get(i));
         }
     }
+    
+    
     
     public void timeSQLAggregate(int reps) {
         for (int i = 0; i < reps; i++) {
@@ -105,6 +109,6 @@ public class PreaggregateCaliper extends SimpleBenchmark {
 
     public static void main(String[] args) throws Exception {
         Locale.setDefault(Locale.US);
-        Runner.main(PreaggregateCaliper.class, args);
+        Runner.main(CaliperPreaggregateAll.class, args);
     }
 }

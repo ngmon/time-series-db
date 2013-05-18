@@ -1,6 +1,6 @@
-﻿CREATE OR REPLACE FUNCTION upsert(tabled varchar(20), dated TIMESTAMP,field varchar(10),begind TIMESTAMP,endd TIMESTAMP) RETURNS integer AS
-$$
-DECLARE
+CREATE OR REPLACE FUNCTION upsert(tabled varchar(20), dated TIMESTAMP,field varchar(10),begind TIMESTAMP,endd TIMESTAMP) RETURNS integer AS 
+$$ 
+DECLARE 
 sum DOUBLE PRECISION;
 count DOUBLE PRECISION;
 avg DOUBLE PRECISION;

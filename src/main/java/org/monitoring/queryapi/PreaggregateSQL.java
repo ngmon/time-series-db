@@ -1,10 +1,10 @@
-package org.monitoring.queryapisql;
+package org.monitoring.queryapi;
 
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 import org.monitoring.queryapi.Event;
 import org.monitoring.queryapi.preaggregation.Preaggregate;
-import org.monitoring.queryapisql.preaggregation.PostgreSQLDatabase;
+import org.monitoring.queryapi.sql.PostgreSQLDatabase;
 /**
  *
  * @author Michal Dubravcik

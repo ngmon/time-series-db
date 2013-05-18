@@ -1,41 +1,49 @@
-[{
+[{ /*comment test*/
     _id:"map", 
     value : 
-    function(x) {        
-        time = x.time;
-        time.setTime(time.getTime()-time.getTime()%step);
-        emit(time, x.data[field]);        
+    function(doc) {        
+        date = doc.date;
+        date.setTime(date.getTime()-date.getTime()%step);
+        path = field.split(".");
+        for(var i = 0; i<path.length; i++){
+            doc = doc[path[i]];
+        }
+        emit(date, doc);        
     }
 },{
     _id:"map_cached", 
     value : 
-    function(x) { 
+    function(doc) { 
         var id = {
-            time: x.time, 
+            date: doc.date, 
             match: hash,
             step: step
         };
-        id.time.setTime(id.time.getTime()-id.time.getTime()%step);
-        emit(id, x.data[field]);
+        id.date.setTime(id.date.getTime()-id.date.getTime()%step);
+        path = field.split(".");
+        for(var i = 0; i<path.length; i++){
+            doc = doc[path[i]];
+        }
+        emit(id, doc);
     }
 },{
     _id:"count_map", 
     value : 
     function(x) {        
-        var time = x.time;
-        time.setTime(time.getTime()-time.getTime()%step);
-        emit(time, 1);  
+        var date = x.date;
+        date.setTime(date.getTime()-date.getTime()%step);
+        emit(date, 1);  
     }
 },{
     _id:"count_map_cached", 
     value : 
     function(x) { 
         var id = {
-            time: x.time, 
+            date: x.date, 
             match: hash,
             step: step
         };
-        id.time.setTime(id.time.getTime()-id.time.getTime()%step);
+        id.date.setTime(id.date.getTime()-id.date.getTime()%step);
         emit(id, 1);
     }
 },{
@@ -48,11 +56,11 @@
     _id:"sum_reduce", 
     value : 
     function( id, values) { 
-        var ret = 0;
+        var sum = 0;
         for(i = 0; i<values.length; i++){
-            ret += values[i];
+            sum += values[i];
         }
-        return ret; 
+        return sum; 
     }
 },{
     _id:"avg_reduce", 
@@ -101,6 +109,39 @@
             count += values[i].count;
         }
         output = {sum : sum, count : count, avg : sum / count };
+        return output; 
+    }
+},{
+    _id:"preaggregate_map_inc", 
+    value : 
+    function(doc) { 
+        for(var i = -rangeLeft; i <= rangeRight; i++){
+            date = doc.date.getTime() + i*actualMillis;
+            id = new Date(date - (date % nextMillis));        
+            f = date % nextMillis;
+            field =  (f - f % actualMillis) / actualMillis; 
+            var output = {};
+            output[field] = {sum : doc.value, count : 1, avg : doc.value };
+            emit(id, output);        
+        }
+    }
+},{
+    _id:"preaggregate_reduce_inc", 
+    value :        
+    function(id, values){           
+        output = {};
+        for(i=0; i<nextMillis/actualMillis;i++){
+            output[i] = {sum : 0, count : 0, avg : 0};
+        }
+        for(i = 0; i<values.length; i++){
+            doc = values[i];
+            for(key in doc){
+                output[key].sum += doc[key].sum;
+                output[key].count += doc[key].count;
+                if(output[key].count != 0)
+                    output[key].avg = output[key].sum / output[key].count;
+            }
+        }
         return output; 
     }
 },{

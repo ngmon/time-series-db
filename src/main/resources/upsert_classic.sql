@@ -1,6 +1,6 @@
-﻿CREATE OR REPLACE FUNCTION upsertclassic(tabled varchar(20), dated TIMESTAMP,field varchar(10),valued DOUBLE PRECISION) RETURNS integer AS
-$$
-DECLARE
+CREATE OR REPLACE FUNCTION upsertclassic(tabled varchar(20), dated TIMESTAMP,field varchar(10),valued DOUBLE PRECISION) RETURNS integer AS 
+$$ 
+DECLARE 
 sumf varchar(10);
 countf varchar(10);
 avgf varchar(10);

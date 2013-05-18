@@ -1,7 +1,8 @@
-package org.monitoring.queryapisql;
+package org.monitoring.queryapi;
 
 
 
+import org.monitoring.queryapi.PreaggregateSQL;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -11,8 +12,7 @@ import java.util.concurrent.TimeUnit;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.monitoring.queryapi.Event;
-import org.monitoring.queryapi.preaggregation.Preaggregate;
-import org.monitoring.queryapisql.preaggregation.PostgreSQLDatabase;
+import org.monitoring.queryapi.sql.PostgreSQLDatabase;
 
 
 /**
@@ -20,7 +20,7 @@ import org.monitoring.queryapisql.preaggregation.PostgreSQLDatabase;
  * @author Michal Dubravcik
  */
 
-public class PreaggregateSQLAggFuncTest {
+public class PreaggregateSQLTest {
 
     static List<Event> list = new ArrayList<Event>();
     static PostgreSQLDatabase postgre = new PostgreSQLDatabase();
@@ -32,7 +32,6 @@ public class PreaggregateSQLAggFuncTest {
         postgre.createTable("aggregate60", 60, 1440, fields);
         postgre.createTable("aggregate1440", 1440, 43200, fields);
         postgre.createTable("aggregate43200", 43200, 525600, fields);
-        postgre.createUpsertFunctions();
         postgre.createEventTable();
         Calendar cal = new GregorianCalendar(2013, 1, 2, 15, 0, 0);        
         cal.set(Calendar.MILLISECOND, 0);
@@ -47,7 +46,7 @@ public class PreaggregateSQLAggFuncTest {
 
     @Test
     public void saveEvent() {
-        Preaggregate preaggregate = new PreaggregateSQLAggFunc();
+        PreaggregateSQL preaggregate = new PreaggregateSQL();
         for(Event event : list){
             int[][] times = {{60, 1440,0,0},{1440, 43200,0,0},{43200, 525600,0,0}};
             preaggregate.saveEvent(TimeUnit.MINUTES, times, event);
